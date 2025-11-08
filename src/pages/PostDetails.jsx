@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2 } from "lucide-react";
+import { request } from "../api"; // ✅ centralized API helper
 
 const PostDetails = () => {
   const { id } = useParams();
@@ -19,9 +20,7 @@ const PostDetails = () => {
   const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5001/api/posts/${id}`);
-      if (!res.ok) throw new Error("Failed to load post");
-      const data = await res.json();
+      const data = await request(`/api/posts/${id}`);
       setPost(data);
     } catch (err) {
       setError(err.message);
@@ -32,13 +31,11 @@ const PostDetails = () => {
 
   const fetchRecommendations = useCallback(async () => {
     try {
-      const res = await fetch(`http://localhost:5001/api/posts/${id}/recommendations`);
-      if (!res.ok) throw new Error("Failed to load recommendations");
-      const data = await res.json();
+      const data = await request(`/api/posts/${id}/recommendations`);
       setRecommended(data);
     } catch (err) {
       console.error("Recommendation error:", err);
-      setRecommended([]); // fallback empty list
+      setRecommended([]); 
     }
   }, [id]);
 
@@ -48,17 +45,17 @@ const PostDetails = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [id]);
 
-
+  
   const handleLike = async () => {
     if (!token) return alert("Please login to like posts!");
     try {
       setIsLiking(true);
-      const res = await fetch(`http://localhost:5001/api/posts/${id}/like`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to like/unlike post");
-      const updated = await res.json();
+      const updated = await request(
+        `/api/posts/${id}/like`,
+        "POST",
+        null,
+        { Authorization: `Bearer ${token}` }
+      );
       setPost(updated);
     } catch (err) {
       console.error(err);
@@ -68,7 +65,6 @@ const PostDetails = () => {
     }
   };
 
-  // Add comment with toxicity check (assuming backend endpoint available)
   const handleAddComment = async (e) => {
     e.preventDefault();
     if (!token) {
@@ -78,29 +74,12 @@ const PostDetails = () => {
     if (!commentText.trim()) return;
 
     try {
-      const toxicityResponse = await fetch("http://127.0.0.1:5002/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: commentText }),
-      });
-      const toxicityData = await toxicityResponse.json();
-      if (toxicityData.is_toxic) {
-        alert("You can’t post toxic or abusive comments.\nThey violate our community guidelines.");
-        setCommentText("");
-        return;
-      }
-
-      const res = await fetch(`http://localhost:5001/api/posts/${id}/comment`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: commentText }),
-      });
-      if (!res.ok) throw new Error("Failed to add comment");
-
-      const updated = await res.json();
+      const updated = await request(
+        `/api/posts/${id}/comment`,
+        "POST",
+        { text: commentText },
+        { Authorization: `Bearer ${token}` }
+      );
       setPost(updated);
       setCommentText("");
     } catch (err) {
@@ -112,14 +91,12 @@ const PostDetails = () => {
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      const res = await fetch(
-        `http://localhost:5001/api/posts/${id}/comment/${commentId}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await request(
+        `/api/posts/${id}/comment/${commentId}`,
+        "DELETE",
+        null,
+        { Authorization: `Bearer ${token}` }
       );
-      if (!res.ok) throw new Error("Failed to delete comment");
       setPost((prev) => ({
         ...prev,
         comments: prev.comments.filter((c) => c._id !== commentId),
@@ -167,7 +144,7 @@ const PostDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10 flex justify-center">
       <div className="max-w-3xl w-full bg-white shadow-md rounded-2xl p-8">
-        {/* Back button */}
+
         <button
           onClick={() => navigate(-1)}
           className="flex items-center text-gray-600 hover:text-blue-600 mb-6 transition"
@@ -175,7 +152,6 @@ const PostDetails = () => {
           <ArrowLeft size={18} className="mr-2" />
           Back
         </button>
-
 
         <h1 className="text-3xl font-bold text-gray-800 mb-3">{post.title}</h1>
 
@@ -187,10 +163,9 @@ const PostDetails = () => {
           <button
             onClick={handleLike}
             disabled={isLiking}
-            className={`flex items-center gap-1 ${hasLiked
-                ? "text-red-500"
-                : "text-gray-500 hover:text-red-500 transition"
-              } ${isLiking ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            className={`flex items-center gap-1 ${
+              hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+            } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Heart
               size={16}
@@ -209,6 +184,7 @@ const PostDetails = () => {
           {post.content}
         </div>
 
+     
         {post.tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {post.tags.map((tag, i) => (
@@ -242,7 +218,6 @@ const PostDetails = () => {
           </div>
         )}
 
-
         <div className="mt-10 border-t pt-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Comments</h2>
 
@@ -268,13 +243,16 @@ const PostDetails = () => {
               post.comments.map((comment) => (
                 <div
                   key={comment._id}
-                  className={`rounded-lg p-3 text-sm border flex justify-between items-start ${comment.isToxic
+                  className={`rounded-lg p-3 text-sm border flex justify-between items-start ${
+                    comment.isToxic
                       ? "bg-red-50 border-red-300 text-red-700"
                       : "bg-gray-100 border-gray-200 text-gray-700"
-                    }`}
+                  }`}
                 >
                   <div>
-                    <p className="font-medium text-gray-900">{comment.user?.name || "User"}</p>
+                    <p className="font-medium text-gray-900">
+                      {comment.user?.name || "User"}
+                    </p>
                     <p className="mt-1">{comment.text}</p>
                     {comment.isToxic && (
                       <p className="text-xs text-red-500 mt-1 font-semibold">
@@ -294,15 +272,18 @@ const PostDetails = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">No comments yet. Be the first to comment!</p>
+              <p className="text-gray-500 text-sm">
+                No comments yet. Be the first to comment!
+              </p>
             )}
           </div>
         </div>
 
-
         {recommended.length > 0 && (
           <div className="mt-10 border-t pt-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Recommended Posts ✨</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Recommended Posts ✨
+            </h2>
             <div className="grid sm:grid-cols-2 gap-4">
               {recommended.map((rec) => (
                 <div

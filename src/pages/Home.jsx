@@ -103,7 +103,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-20">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
@@ -134,7 +133,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
+      
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">

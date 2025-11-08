@@ -58,7 +58,7 @@ const Register = () => {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name */}
+
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -72,7 +72,6 @@ const Register = () => {
             />
           </div>
 
-          {/* Email */}
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -86,7 +85,6 @@ const Register = () => {
             />
           </div>
 
-          {/* Password */}
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -107,7 +105,7 @@ const Register = () => {
             </button>
           </div>
 
-          {/* Confirm Password */}
+
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -128,7 +126,7 @@ const Register = () => {
             </button>
           </div>
 
-          {/* Terms */}
+   
           <div className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -149,8 +147,6 @@ const Register = () => {
               </Link>
             </span>
           </div>
-
-          {/* Submit */}
           <button
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"

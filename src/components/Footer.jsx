@@ -45,8 +45,6 @@ const Footer = () => {
             Terms of Service
           </Link>
         </div>
-
-        {/* 🌐 Social Icons */}
         <div className="flex justify-center md:justify-end items-center space-x-4">
           <a
             href="https://facebook.com"

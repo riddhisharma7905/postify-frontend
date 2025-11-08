@@ -12,6 +12,7 @@ import {
   FileText,
   UserPlus,
 } from "lucide-react";
+import { request } from "../api"; // ✅ use centralized API helper
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -32,31 +33,25 @@ const Dashboard = () => {
     try {
       setLoading(true);
 
-      const [postsRes, userRes] = await Promise.all([
-        fetch("http://localhost:5001/api/posts/user/me", {
-          headers: { Authorization: `Bearer ${token}` },
+      // ✅ Using request() helper instead of fetch
+      const [postsData, userData] = await Promise.all([
+        request("/api/posts/user/me", "GET", null, {
+          Authorization: `Bearer ${token}`,
         }),
-        fetch("http://localhost:5001/api/user/dashboard", {
-          headers: { Authorization: `Bearer ${token}` },
+        request("/api/user/dashboard", "GET", null, {
+          Authorization: `Bearer ${token}`,
         }),
       ]);
-
-      if (!postsRes.ok || !userRes.ok) {
-        if (postsRes.status === 401 || userRes.status === 401) {
-          localStorage.removeItem("authToken");
-          navigate("/login");
-          return;
-        }
-        throw new Error("Failed to fetch dashboard data");
-      }
-
-      const postsData = await postsRes.json();
-      const userData = await userRes.json();
 
       setPosts(postsData);
       setUserData(userData);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
+      if (err.message.includes("401")) {
+        localStorage.removeItem("authToken");
+        navigate("/login");
+        return;
+      }
       setError(err.message);
     } finally {
       setLoading(false);
@@ -83,16 +78,10 @@ const Dashboard = () => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
       const token = localStorage.getItem("authToken");
-      const res = await fetch(`http://localhost:5001/api/posts/${postId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
+      await request(`/api/posts/${postId}`, "DELETE", null, {
+        Authorization: `Bearer ${token}`,
       });
-
-      if (res.ok) {
-        setPosts((prev) => prev.filter((p) => p._id !== postId));
-      } else {
-        alert("Failed to delete post");
-      }
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
     } catch (err) {
       alert("Error deleting post: " + err.message);
     }

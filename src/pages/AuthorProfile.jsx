@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, Heart, Users, FileText, UserPlus } from "lucide-react";
+import { Eye, Heart, Users, FileText, UserPlus } from "lucide-react"// ✅ Use centralized helper
 
 const AuthorProfile = () => {
   const { id } = useParams();
@@ -10,11 +10,10 @@ const AuthorProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
   const token = localStorage.getItem("authToken");
 
   const fetchAuthorData = useCallback(async () => {
-
     if (!id || id === "undefined") {
       setError("Invalid author ID");
       setLoading(false);
@@ -23,34 +22,25 @@ const AuthorProfile = () => {
 
     try {
       setLoading(true);
-      setError(""); // Reset error
+      setError("");
 
-      const [userRes, postRes] = await Promise.all([
-        fetch(`http://localhost:5001/api/user/${id}`),
-        fetch(`http://localhost:5001/api/posts/author/${id}`),
+      const [userData, postsData] = await Promise.all([
+        request(`/api/user/${id}`),
+        request(`/api/posts/author/${id}`),
       ]);
-
-      if (!userRes.ok || !postRes.ok) {
-        throw new Error("Failed to fetch author data");
-      }
-
-      const userData = await userRes.json();
-      const postsData = await postRes.json();
 
       setAuthor(userData);
       setPosts(postsData);
 
+     
       if (token) {
-        const followStatusRes = await fetch(
-          `http://localhost:5001/api/user/${id}/follow-status`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        const followStatus = await request(
+          `/api/user/${id}/follow-status`,
+          "GET",
+          null,
+          { Authorization: `Bearer ${token}` }
         );
-        if (followStatusRes.ok) {
-          const { isFollowing } = await followStatusRes.json();
-          setIsFollowing(isFollowing);
-        }
+        setIsFollowing(followStatus.isFollowing);
       }
     } catch (err) {
       console.error("Error fetching author data:", err);
@@ -76,16 +66,11 @@ const AuthorProfile = () => {
     try {
       setFollowLoading(true);
 
-      const res = await fetch(`http://localhost:5001/api/user/${id}/follow`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await request(`/api/user/${id}/follow`, "POST", null, {
+        Authorization: `Bearer ${token}`,
       });
 
-      if (!res.ok) throw new Error("Failed to follow/unfollow");
-      const data = await res.json();
-
       setIsFollowing(data.isFollowing);
-
       setAuthor((prev) => ({
         ...prev,
         followers: data.targetUser.followers,
@@ -93,13 +78,13 @@ const AuthorProfile = () => {
       }));
     } catch (err) {
       console.error("Follow toggle error:", err);
-      alert("Error following user. Please try again.");
+      alert("Error following/unfollowing user. Please try again.");
     } finally {
       setFollowLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -108,9 +93,8 @@ const AuthorProfile = () => {
         </div>
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-red-500 text-lg mb-4">Error: {error}</p>
@@ -122,9 +106,8 @@ const AuthorProfile = () => {
         </button>
       </div>
     );
-  }
 
-  if (!author) {
+  if (!author)
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-gray-500 text-lg mb-4">Author not found.</p>
@@ -136,7 +119,6 @@ const AuthorProfile = () => {
         </button>
       </div>
     );
-  }
 
   const totalLikes = posts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
   const totalViews = posts.reduce((acc, p) => acc + (p.views || 0), 0);
@@ -157,6 +139,7 @@ const AuthorProfile = () => {
               </p>
             </div>
           </div>
+
           <button
             onClick={handleFollowToggle}
             disabled={followLoading}
@@ -170,15 +153,12 @@ const AuthorProfile = () => {
           </button>
         </div>
 
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Followers</p>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {followersCount}
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-800">{followersCount}</h2>
               </div>
               <Users className="h-8 w-8 text-purple-500" />
             </div>
@@ -188,9 +168,7 @@ const AuthorProfile = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500">Following</p>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  {followingCount}
-                </h2>
+                <h2 className="text-2xl font-bold text-gray-800">{followingCount}</h2>
               </div>
               <UserPlus className="h-8 w-8 text-indigo-500" />
             </div>

@@ -5,13 +5,11 @@ function Header({ isLoggedIn, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Handle logout: remove token, update state, redirect to home
   const handleLogout = () => {
-    onLogout(); // clears token + updates isLoggedIn
-    navigate("/home", { replace: true }); // ensures redirect to home
+    onLogout();
+    navigate("/home", { replace: true }); 
   };
 
-  // ✅ Handle protected navigation (Explore/Dashboard)
   const handleProtectedClick = (e, targetPath) => {
     if (!isLoggedIn) {
       e.preventDefault();

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft,  Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { request } from "../api"; // ✅ use centralized API helper
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -9,7 +10,6 @@ const CreatePost = () => {
   const [tags, setTags] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
-
 
   const handlePublish = async (e) => {
     e.preventDefault();
@@ -24,23 +24,18 @@ const CreatePost = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:5001/api/posts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      await request(
+        "/api/posts",
+        "POST",
+        {
           title,
           content,
           tags: tags.split(",").map((t) => t.trim()),
-        }),
-      });
+        },
+        { Authorization: `Bearer ${token}` }
+      );
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to publish post");
-
-      alert("Post Published Successfully!");
+      alert("✅ Post Published Successfully!");
       navigate("/dashboard");
     } catch (err) {
       console.error("Publish error:", err);
@@ -52,7 +47,6 @@ const CreatePost = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10 px-4">
-
       <div className="w-full max-w-4xl flex items-center justify-between mb-8">
         <button
           onClick={() => navigate("/dashboard")}
@@ -62,9 +56,7 @@ const CreatePost = () => {
           <span className="font-medium">Back to Dashboard</span>
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-800">
-          Create New Blog Post
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-800">Create New Blog Post</h1>
       </div>
 
       <form
@@ -76,8 +68,6 @@ const CreatePost = () => {
             ⚠️ {error}
           </div>
         )}
-
-        
 
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -107,7 +97,6 @@ const CreatePost = () => {
           ></textarea>
         </div>
 
-        {/* Tags */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tags (comma separated)
@@ -121,7 +110,6 @@ const CreatePost = () => {
           />
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end gap-4 mt-8">
           <button
             type="button"

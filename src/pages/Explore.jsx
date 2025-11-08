@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { request } from "../api"; 
 
 function useDebounce(value, delay = 600) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,7 +23,7 @@ const Explore = () => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        let url = "http://localhost:5001/api/posts";
+        let url = "/api/posts";
 
         if (debouncedSearch.trim()) {
           const query = debouncedSearch.trim().replace(/^#/, "");
@@ -31,10 +32,7 @@ const Explore = () => {
           url += "/explore";
         }
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to load posts");
-
-        const data = await res.json();
+        const data = await request(url);
         setPosts(data);
       } catch (err) {
         console.error("Error fetching explore/search posts:", err);
@@ -61,7 +59,6 @@ const Explore = () => {
           Discover trending posts and personalized recommendations from creators worldwide.
         </p>
 
-      
         <div style={styles.searchContainer}>
           <input
             type="text"
@@ -73,7 +70,6 @@ const Explore = () => {
         </div>
       </section>
 
-      {/* 🧠 Results */}
       <section style={styles.results}>
         {posts.length > 0 ? (
           <div style={styles.cardGrid}>
