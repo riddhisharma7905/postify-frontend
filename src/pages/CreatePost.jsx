@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { request } from "../api"; // ✅ use centralized API helper
+import { request } from "../api"; 
 
 const CreatePost = () => {
   const navigate = useNavigate();

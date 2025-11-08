@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, Heart, Users, FileText, UserPlus } from "lucide-react"// ✅ Use centralized helper
+import { Eye, Heart, Users, FileText, UserPlus } from "lucide-react";
+import { request } from "../api"; 
 
 const AuthorProfile = () => {
   const { id } = useParams();
