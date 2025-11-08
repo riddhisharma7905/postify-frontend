@@ -1,22 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft,  Loader2 } from "lucide-react";
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
-  const [coverImage, setCoverImage] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState("");
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCoverImage(URL.createObjectURL(file));
-    }
-  };
 
   const handlePublish = async (e) => {
     e.preventDefault();

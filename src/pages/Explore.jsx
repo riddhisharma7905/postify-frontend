@@ -15,7 +15,6 @@ const Explore = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const token = localStorage.getItem("authToken");
 
   const debouncedSearch = useDebounce(searchQuery, 600);
 

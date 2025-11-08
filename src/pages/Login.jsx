@@ -110,22 +110,7 @@ const Login = ({ onLogin }) => {
   };
 
 
-  const testBackendConnection = async () => {
-    try {
-      console.log("Testing backend connection...");
-      const testResponse = await fetch("http://localhost:5001/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "test@test.com", password: "test" }),
-      });
-      console.log("Connection test status:", testResponse.status);
-      const testText = await testResponse.text();
-      console.log("Connection test response:", testText);
-    } catch (error) {
-      console.error("Connection test failed:", error);
-    }
-  };
-
+  
 
 
   return (
