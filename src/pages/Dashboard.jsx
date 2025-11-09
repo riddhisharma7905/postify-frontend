@@ -255,13 +255,6 @@ const Dashboard = () => {
                           <Eye size={18} />
                         </button>
                         <button
-                          onClick={() => navigate(`/edit/${post._id}`)}
-                          className="text-gray-600 hover:text-green-600 p-2 rounded-lg hover:bg-green-50 transition"
-                          title="Edit post"
-                        >
-                          <Edit3 size={18} />
-                        </button>
-                        <button
                           onClick={() => handleDeletePost(post._id)}
                           className="text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
                           title="Delete post"
