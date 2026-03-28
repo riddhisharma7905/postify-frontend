@@ -1,18 +1,83 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Eye, Heart, Users, FileText, UserPlus } from "lucide-react";
-import { request } from "../api"; 
+import { Heart, FileText, UserPlus, Pin, PinOff, Eye } from "lucide-react";
+import { request } from "../api";
+import UserListModal from "../components/UserListModal";
+
+const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop";
+
+// Helper to get logged-in user ID
+const getMyId = () => {
+  try {
+    const token = localStorage.getItem("authToken");
+    if (!token) return null;
+    return JSON.parse(atob(token.split(".")[1]))?.id;
+  } catch { return null; }
+};
+
+// Instagram-style square card
+const GridCard = ({ post, isPinned, isOwner, onPin, onClick }) => (
+  <div className="relative group aspect-square cursor-pointer overflow-hidden rounded-2xl bg-gray-100" onClick={onClick}>
+    <img
+      src={post.image || FALLBACK_IMAGE}
+      alt={post.title}
+      className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500"
+    />
+
+    {/* Hover overlay with stats */}
+    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-6 text-white">
+      <span className="flex items-center gap-1.5 font-bold text-sm">
+        <Heart size={18} fill="white" /> {post.likes?.length || 0}
+      </span>
+      <span className="flex items-center gap-1.5 font-bold text-sm">
+        <Eye size={18} /> {post.views || 0}
+      </span>
+    </div>
+
+    {/* Pinned badge */}
+    {isPinned && (
+      <div className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded-lg flex items-center gap-1 shadow-md">
+        <Pin size={10} /> Pinned
+      </div>
+    )}
+
+    {/* Category badge */}
+    {post.category && (
+      <div className="absolute top-2 right-2 bg-white/90 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-lg shadow-sm uppercase tracking-wider">
+        {post.category}
+      </div>
+    )}
+
+    {/* Pin button (owner only, visible on hover) */}
+    {isOwner && (
+      <button
+        onClick={(e) => { e.stopPropagation(); onPin(post._id); }}
+        title={isPinned ? "Unpin" : "Pin to top"}
+        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm text-gray-700 hover:text-yellow-600 p-1.5 rounded-lg shadow-md"
+      >
+        {isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+      </button>
+    )}
+  </div>
+);
 
 const AuthorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [author, setAuthor] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [likedPosts, setLikedPosts] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("posts");
+  const [modal, setModal] = useState(null);
+  const [pinnedPostId, setPinnedPostId] = useState(null);
+
   const token = localStorage.getItem("authToken");
+  const myId = getMyId();
+  const isOwner = myId === id;
 
   const fetchAuthorData = useCallback(async () => {
     if (!id || id === "undefined") {
@@ -20,68 +85,56 @@ const AuthorProfile = () => {
       setLoading(false);
       return;
     }
-
     try {
       setLoading(true);
       setError("");
-
-      const [userData, postsData] = await Promise.all([
+      const [userData, postsData, likedData] = await Promise.all([
         request(`/api/user/${id}`),
-        request(`/api/posts/author/${id}`),
+        request(`/api/posts/author/${id}`).catch(() => []),
+        request(`/api/posts/liked-by/${id}`).catch(() => []),
       ]);
-
       setAuthor(userData);
       setPosts(postsData);
+      setLikedPosts(likedData);
+      setPinnedPostId(userData.pinnedPostId || null);
 
-     
       if (token) {
-        const followStatus = await request(
-          `/api/user/${id}/follow-status`,
-          "GET",
-          null,
-          { Authorization: `Bearer ${token}` }
-        );
+        const followStatus = await request(`/api/user/${id}/follow-status`, "GET", null, {
+          Authorization: `Bearer ${token}`,
+        });
         setIsFollowing(followStatus.isFollowing);
       }
     } catch (err) {
-      console.error("Error fetching author data:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   }, [id, token]);
 
-  useEffect(() => {
-    fetchAuthorData();
-  }, [fetchAuthorData]);
+  useEffect(() => { fetchAuthorData(); }, [fetchAuthorData]);
 
   const handleFollowToggle = async () => {
-    if (!token) {
-      alert("Please login to follow authors!");
-      navigate("/login");
-      return;
-    }
-
+    if (!token) { alert("Please login to follow authors!"); navigate("/login"); return; }
     if (followLoading) return;
-
     try {
       setFollowLoading(true);
-
-      const data = await request(`/api/user/${id}/follow`, "POST", null, {
-        Authorization: `Bearer ${token}`,
-      });
-
+      const data = await request(`/api/user/${id}/follow`, "POST", null, { Authorization: `Bearer ${token}` });
       setIsFollowing(data.isFollowing);
-      setAuthor((prev) => ({
-        ...prev,
-        followers: data.targetUser.followers,
-        following: data.targetUser.following,
-      }));
+      setAuthor((prev) => ({ ...prev, followers: data.targetUser.followers, following: data.targetUser.following }));
     } catch (err) {
-      console.error("Follow toggle error:", err);
-      alert("Error following/unfollowing user. Please try again.");
+      alert("Error following/unfollowing user.");
     } finally {
       setFollowLoading(false);
+    }
+  };
+
+  const handlePin = async (postId) => {
+    if (!token) return;
+    try {
+      const res = await request(`/api/user/pin/${postId}`, "POST", null, { Authorization: `Bearer ${token}` });
+      setPinnedPostId(res.pinnedPostId);
+    } catch (err) {
+      alert("Could not pin post: " + err.message);
     }
   };
 
@@ -89,8 +142,8 @@ const AuthorProfile = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading author profile...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-400 font-medium text-sm">Loading profile...</p>
         </div>
       </div>
     );
@@ -99,12 +152,7 @@ const AuthorProfile = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-red-500 text-lg mb-4">Error: {error}</p>
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Go Back
-        </button>
+        <button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Go Back</button>
       </div>
     );
 
@@ -112,162 +160,154 @@ const AuthorProfile = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-gray-500 text-lg mb-4">Author not found.</p>
-        <button
-          onClick={() => navigate(-1)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          Go Back
-        </button>
+        <button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Go Back</button>
       </div>
     );
 
-  const totalLikes = posts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
-  const totalViews = posts.reduce((acc, p) => acc + (p.views || 0), 0);
   const followersCount = author?.followers?.length || 0;
   const followingCount = author?.following?.length || 0;
 
+  // Sort posts: pinned first, then by date
+  const sortedPosts = [...posts].sort((a, b) => {
+    if (a._id === pinnedPostId) return -1;
+    if (b._id === pinnedPostId) return 1;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });
+
+  const displayPosts = activeTab === "posts" ? sortedPosts : likedPosts;
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <main className="flex-1 container mx-auto px-6 py-10">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-10">
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                {author.name}'s Profile 👤
-              </h1>
-              <p className="text-gray-600 mt-2 text-lg max-w-2xl italic font-medium">
-                {author.bio || `Explore all posts written by ${author.name}.`}
-              </p>
+    <div className="min-h-screen bg-white">
+      {modal === "followers" && (
+        <UserListModal title="Followers" users={author.followers || []} onClose={() => setModal(null)} />
+      )}
+      {modal === "following" && (
+        <UserListModal title="Following" users={author.following || []} onClose={() => setModal(null)} />
+      )}
+
+      <div className="max-w-4xl mx-auto px-6 pt-14 pb-20">
+
+        {/* ── Profile Header ── */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 pb-10 border-b border-gray-100 mb-0">
+
+          {/* Circular avatar */}
+          <div className="flex-shrink-0">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-black text-4xl shadow-lg ring-4 ring-white">
+              {author.name?.charAt(0)?.toUpperCase()}
             </div>
           </div>
 
-          <button
-            onClick={handleFollowToggle}
-            disabled={followLoading}
-            className={`px-5 py-2.5 font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed ${
-              isFollowing
-                ? "bg-gray-300 text-gray-800 hover:bg-gray-400"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Followers</p>
-                <h2 className="text-2xl font-bold text-gray-800">{followersCount}</h2>
-              </div>
-              <Users className="h-8 w-8 text-purple-500" />
+          {/* Info */}
+          <div className="flex-1 text-center sm:text-left">
+            {/* Name + Follow button */}
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mb-3">
+              <h1 className="text-2xl font-black text-gray-900 tracking-tight">{author.name}</h1>
+              {!isOwner && (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={followLoading}
+                  className={`text-sm font-bold px-5 py-1.5 rounded-full border-2 transition-all ${
+                    isFollowing
+                      ? "border-gray-300 text-gray-600 hover:border-red-300 hover:text-red-500"
+                      : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <UserPlus size={13} />
+                    {followLoading ? "..." : isFollowing ? "Following" : "Follow"}
+                  </span>
+                </button>
+              )}
+              {isOwner && (
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="text-sm font-bold px-5 py-1.5 rounded-full border-2 border-gray-200 text-gray-600 hover:bg-gray-50 transition-all"
+                >
+                  Edit Profile
+                </button>
+              )}
             </div>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Following</p>
-                <h2 className="text-2xl font-bold text-gray-800">{followingCount}</h2>
+            {/* Stats row */}
+            <div className="flex justify-center sm:justify-start gap-8 mb-4 text-[14px]">
+              <div className="text-center sm:text-left">
+                <span className="font-black text-gray-900">{posts.length}</span>
+                <span className="text-gray-400 font-bold"> posts</span>
               </div>
-              <UserPlus className="h-8 w-8 text-indigo-500" />
+              <button onClick={() => setModal("followers")} className="text-center sm:text-left hover:text-blue-600 transition-colors">
+                <span className="font-black text-gray-900">{followersCount}</span>
+                <span className="text-gray-400 font-bold"> followers</span>
+              </button>
+              <button onClick={() => setModal("following")} className="text-center sm:text-left hover:text-blue-600 transition-colors">
+                <span className="font-black text-gray-900">{followingCount}</span>
+                <span className="text-gray-400 font-bold"> following</span>
+              </button>
             </div>
-          </div>
 
-          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Posts</p>
-                <h2 className="text-2xl font-bold text-gray-800">{posts.length}</h2>
-              </div>
-              <FileText className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Views</p>
-                <h2 className="text-2xl font-bold text-gray-800">{totalViews}</h2>
-              </div>
-              <Eye className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Likes</p>
-                <h2 className="text-2xl font-bold text-gray-800">{totalLikes}</h2>
-              </div>
-              <Heart className="h-8 w-8 text-pink-500" />
-            </div>
+            {/* Bio */}
+            {author.bio ? (
+              <p className="text-gray-600 text-[14px] leading-relaxed max-w-sm font-medium">{author.bio}</p>
+            ) : (
+              <p className="text-gray-400 text-[13px] italic">Member of the Postify community.</p>
+            )}
           </div>
         </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Posts by {author.name}</h2>
-          </div>
+        {/* ── Tabs (Instagram style) ── */}
+        <div className="flex border-b border-gray-100">
+          {[
+            { key: "posts", label: "Posts", count: posts.length },
+            { key: "likes", label: "Likes", count: likedPosts.length },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 py-4 text-[13px] font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-2 ${
+                activeTab === key
+                  ? "border-gray-900 text-gray-900"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              {label}
+              <span className={`text-[11px] px-2 py-0.5 rounded-full ${activeTab === key ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-400"}`}>
+                {count}
+              </span>
+            </button>
+          ))}
+        </div>
 
-          {posts.length === 0 ? (
-            <div className="bg-white p-12 rounded-xl shadow text-center">
-              <FileText size={48} className="text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg mb-2">
-                {author.name} hasn't written any posts yet.
+        {/* ── Posts Grid ── */}
+        <div className="pt-6">
+          {displayPosts.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <FileText size={32} className="text-gray-200" />
+              </div>
+              <h3 className="text-gray-700 font-black text-lg mb-2">
+                {activeTab === "posts" ? "No posts yet" : "No liked posts yet"}
+              </h3>
+              <p className="text-gray-400 text-sm font-medium">
+                {activeTab === "posts"
+                  ? `${author.name} hasn't published anything yet.`
+                  : `${author.name} hasn't liked any posts yet.`}
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {posts.map((post) => (
-                <div
+            <div className="grid grid-cols-3 gap-1 sm:gap-3">
+              {displayPosts.map((post) => (
+                <GridCard
                   key={post._id}
+                  post={post}
+                  isPinned={post._id === pinnedPostId}
+                  isOwner={isOwner}
+                  onPin={handlePin}
                   onClick={() => navigate(`/post/${post._id}`)}
-                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 flex flex-col"
-                >
-                  {/* Card Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={post.image || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop"}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[11px] font-bold text-gray-600 shadow-sm uppercase tracking-wider">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2 leading-snug">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-6 flex-1">
-                      {post.content}
-                    </p>
-
-                    {/* Footer Stats */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                      <div className="flex gap-4 text-xs font-semibold text-gray-500">
-                        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                          <Eye size={14} /> {post.views || 0}
-                        </span>
-                        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg group-hover:bg-pink-50 group-hover:text-pink-600 transition-colors">
-                          <Heart size={14} /> {post.likes?.length || 0}
-                        </span>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                         <FileText size={16} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };

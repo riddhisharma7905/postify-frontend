@@ -221,7 +221,7 @@ const Explore = () => {
             </div>
             <input
               type="text"
-              placeholder="Search by title, tag, or creator..."
+              placeholder="Search by tag (e.g. react, ai, web3)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-14 pr-14 py-5 bg-gray-50 border border-gray-100 rounded-[24px] focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 transition-all outline-none text-gray-900 font-medium text-[17px] shadow-sm"
@@ -235,6 +235,7 @@ const Explore = () => {
               </button>
             )}
           </div>
+         
 
           {/* Category Filter Chips */}
           <div className="flex flex-wrap justify-center gap-2.5 mt-8">

@@ -15,6 +15,8 @@ import {
   User,
   Phone,
   Info,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { 
   BarChart, 
@@ -33,6 +35,7 @@ import {
   Pie
 } from "recharts";
 import { request } from "../api";
+import UserListModal from "../components/UserListModal";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -40,6 +43,8 @@ const Dashboard = () => {
   const [error, setError] = useState("");
   const [posts, setPosts] = useState([]);
   const [userData, setUserData] = useState({});
+  const [dashboardModal, setDashboardModal] = useState(null);
+  const [pinnedPostId, setPinnedPostId] = useState(null);
   const navigate = useNavigate();
 
   const [profileForm, setProfileForm] = useState({
@@ -73,6 +78,7 @@ const Dashboard = () => {
 
       setPosts(postsData);
       setUserData(userDataRes);
+      setPinnedPostId(userDataRes.pinnedPostId || null);
       setProfileForm({
         name: userDataRes.name || "",
         email: userDataRes.email || "",
@@ -136,8 +142,22 @@ const Dashboard = () => {
         Authorization: `Bearer ${token}`,
       });
       setPosts((prev) => prev.filter((p) => p._id !== postId));
+      if (pinnedPostId === postId) setPinnedPostId(null);
     } catch (err) {
       alert("Error deleting post: " + err.message);
+    }
+  };
+
+  const handlePin = async (postId) => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+    try {
+      const res = await request(`/api/user/pin/${postId}`, "POST", null, {
+        Authorization: `Bearer ${token}`,
+      });
+      setPinnedPostId(res.pinnedPostId);
+    } catch (err) {
+      alert("Could not pin post: " + err.message);
     }
   };
 
@@ -199,8 +219,8 @@ const Dashboard = () => {
     { title: "Total Posts", value: totalPosts, icon: FileText, color: "text-blue-500" },
     { title: "Total Views", value: totalViews, icon: Eye, color: "text-green-500" },
     { title: "Total Likes", value: totalLikes, icon: Heart, color: "text-pink-500" },
-    { title: "Followers", value: followersCount, icon: Users, color: "text-purple-500" },
-    { title: "Following", value: followingCount, icon: UserPlus, color: "text-indigo-500" },
+    { title: "Followers", value: followersCount, icon: Users, color: "text-purple-500", onClick: () => setDashboardModal("followers") },
+    { title: "Following", value: followingCount, icon: UserPlus, color: "text-indigo-500", onClick: () => setDashboardModal("following") },
   ];
 
   const tabs = ["Overview", "My Posts", "Scheduled", "Analytics", "Profile"];
@@ -208,6 +228,20 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans">
+      {dashboardModal === "followers" && (
+        <UserListModal
+          title="Your Followers"
+          users={Array.isArray(userData.followers) ? userData.followers : []}
+          onClose={() => setDashboardModal(null)}
+        />
+      )}
+      {dashboardModal === "following" && (
+        <UserListModal
+          title="People You Follow"
+          users={Array.isArray(userData.following) ? userData.following : []}
+          onClose={() => setDashboardModal(null)}
+        />
+      )}
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         
         {/* Welcome Header */}
@@ -261,7 +295,8 @@ const Dashboard = () => {
               {stats.map((stat, i) => (
                 <div
                   key={i}
-                  className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:border-gray-300 transition-colors"
+                  onClick={stat.onClick}
+                  className={`bg-white p-5 rounded-2xl border border-gray-200/80 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:border-gray-300 transition-colors ${stat.onClick ? 'cursor-pointer hover:bg-gray-50' : ''}`}
                 >
                   <div className="flex justify-between items-start mb-6">
                     <p className="text-[13px] font-medium text-gray-600">{stat.title}</p>
@@ -273,6 +308,7 @@ const Dashboard = () => {
                     <h3 className="text-3xl font-bold text-gray-900 mb-1 tracking-tight">
                       {stat.value}
                     </h3>
+                    {stat.onClick && <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest"></p>}
                   </div>
                 </div>
               ))}
@@ -421,6 +457,24 @@ const Dashboard = () => {
                         <Eye size={18} />
                       </button>
                       <button
+                        onClick={() => handlePin(post._id)}
+                        className={`bg-white/95 backdrop-blur-sm p-2 rounded-xl shadow-lg transition-all transform hover:scale-110 ${
+                          pinnedPostId === post._id
+                            ? "text-yellow-600 hover:bg-yellow-500 hover:text-white"
+                            : "text-gray-500 hover:bg-yellow-400 hover:text-white"
+                        }`}
+                        title={pinnedPostId === post._id ? "Unpin post" : "Pin to top of profile"}
+                      >
+                        {pinnedPostId === post._id ? <PinOff size={18} /> : <Pin size={18} />}
+                      </button>
+                      <button
+                        onClick={() => navigate(`/edit/${post._id}`)}
+                        className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
+                        title="Edit post"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                      </button>
+                      <button
                         onClick={() => handleDeletePost(post._id)}
                         className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-red-500 shadow-lg hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"
                         title="Delete post"
@@ -428,6 +482,12 @@ const Dashboard = () => {
                         <Trash2 size={18} />
                       </button>
                     </div>
+                    {/* Pinned badge */}
+                    {pinnedPostId === post._id && (
+                      <div className="absolute top-4 left-4 z-20 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-md">
+                        <Pin size={10} /> Pinned
+                      </div>
+                    )}
 
                     {/* Card Image */}
                     <div className="relative h-44 overflow-hidden">

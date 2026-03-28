@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreatePost from "./pages/CreatePost";
+import EditPost from "./pages/EditPost";
 import PostDetails from "./pages/PostDetails";
 import AuthorProfile from "./pages/AuthorProfile";
 import Legal from "./pages/Legal";
@@ -50,6 +51,7 @@ function App() {
               <>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/createpost" element={<CreatePost />} />
+                <Route path="/edit/:id" element={<EditPost />} />
               </>
             ) : (
               <Route path="*" element={<Navigate to="/login" replace />} />
