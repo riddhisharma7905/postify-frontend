@@ -294,27 +294,36 @@ const Dashboard = () => {
                     View All
                   </button>
                 </div>
-                <div className="space-y-3 flex-1">
+                <div className="grid grid-cols-2 gap-4 flex-1">
                   {publishedPosts.length > 0 ? (
                     publishedPosts.slice(0, 4).map((post) => (
                       <div
                         key={post._id}
-                        className="p-4 bg-gray-50/80 rounded-2xl hover:bg-gray-100/80 transition-colors cursor-pointer"
+                        className="p-5 bg-gray-50/80 rounded-[24px] hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-100 flex flex-col justify-between group"
                         onClick={() => navigate(`/post/${post._id}`)}
                       >
-                        <h3 className="font-semibold text-gray-900 mb-2 truncate text-[15px]">{post.title}</h3>
-                        <div className="flex items-center gap-5 text-[13px] text-gray-500">
-                          <span className="flex items-center gap-1.5"><Eye size={15} /> {post.views || 0}</span>
-                          <span className="flex items-center gap-1.5"><Heart size={15} /> {post.likes?.length || 0}</span>
+                        <h3 className="font-bold text-gray-900 mb-3 line-clamp-2 text-[14px] leading-tight group-hover:text-blue-600 transition-colors">
+                          {post.title}
+                        </h3>
+                        <div className="flex items-center gap-4 text-[12px] font-bold text-gray-500 mt-auto pt-3 border-t border-gray-100/50">
+                          <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-lg">
+                            <Eye size={14} className="text-blue-400" /> {post.views || 0}
+                          </span>
+                          <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-lg">
+                            <Heart size={14} className="text-pink-400" /> {post.likes?.length || 0}
+                          </span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="py-8 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                      <p className="text-gray-500 text-sm">No recent posts found.</p>
+                    <div className="col-span-2 py-10 px-6 text-center bg-gray-50/50 rounded-[32px] border-2 border-dashed border-gray-200/60 flex flex-col items-center justify-center">
+                      <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 border border-gray-100">
+                         <TrendingUp size={24} className="text-gray-300" />
+                      </div>
+                      <p className="text-gray-500 text-sm font-semibold mb-1">No recent posts found.</p>
                       <button 
                         onClick={() => navigate("/createpost")}
-                        className="mt-3 text-sm text-blue-500 font-medium hover:underline"
+                        className="text-[13px] text-blue-500 font-bold hover:text-blue-600 transition-colors"
                       >
                         Create your first post
                       </button>
@@ -385,57 +394,70 @@ const Dashboard = () => {
             </div>
 
             {publishedPosts.length === 0 ? (
-              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <FileText size={48} className="text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2 font-medium">No posts yet</p>
-                <p className="text-gray-400 text-sm">
-                  Start writing your first post to see it here
+              <div className="bg-white p-16 rounded-[40px] shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mb-6 text-gray-300">
+                   <FileText size={40} />
+                </div>
+                <p className="text-gray-900 text-xl font-bold mb-2">No posts yet</p>
+                <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8">
+                  Start writing your first story to share it with the world.
                 </p>
+                
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {publishedPosts.map((post) => (
                   <div
                     key={post._id}
-                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition"
+                    className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col relative"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-[17px] mb-1">
-                          {post.title}
-                        </h3>
-                        <p className="text-gray-400 text-[13px] mb-3">
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </p>
-                        <div className="text-[13px] text-gray-500 flex gap-5">
-                          <span className="flex items-center gap-1.5">
-                            <Eye size={16} /> {post.views || 0} views
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <Heart size={16} /> {post.likes?.length || 0} likes
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <MessageCircle size={16} />{" "}
-                            {post.comments?.length || 0} comments
-                          </span>
-                        </div>
-                      </div>
+                    {/* Card Actions Overlay */}
+                    <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        onClick={() => navigate(`/post/${post._id}`)}
+                        className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
+                        title="View post"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeletePost(post._id)}
+                        className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-red-500 shadow-lg hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"
+                        title="Delete post"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
 
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => navigate(`/post/${post._id}`)}
-                          className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition"
-                          title="View post"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePost(post._id)}
-                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
-                          title="Delete post"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                    {/* Card Image */}
+                    <div className="relative h-44 overflow-hidden">
+                      <img
+                        src={post.image || "https://images.unsplash.com/photo-1542435503-956c469947f6?w=800&auto=format&fit=crop"}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                    </div>
+
+                    {/* Card Content */}
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-3 opacity-70">
+                        {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2 leading-tight">
+                        {post.title}
+                      </h3>
+                      <p className="text-gray-500 text-[13px] line-clamp-3 mb-6 flex-1 leading-relaxed">
+                        {post.content}
+                      </p>
+
+                      {/* Footer Stats */}
+                      <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
+                        <div className="flex gap-4 text-[11px] font-bold text-gray-400">
+                          <span className="flex items-center gap-1.5"><Eye size={14} /> {post.views || 0}</span>
+                          <span className="flex items-center gap-1.5"><Heart size={14} /> {post.likes?.length || 0}</span>
+                          <span className="flex items-center gap-1.5"><MessageCircle size={14} /> {post.comments?.length || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -456,48 +478,70 @@ const Dashboard = () => {
             </div>
 
             {scheduledPosts.length === 0 ? (
-              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
-                <Calendar size={48} className="text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2 font-medium">No scheduled posts</p>
-                <p className="text-gray-400 text-sm">
+              <div className="bg-white p-16 rounded-[40px] shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mb-6 text-blue-400">
+                   <Calendar size={40} />
+                </div>
+                <p className="text-gray-900 text-xl font-bold mb-2">No scheduled posts</p>
+                <p className="text-gray-500 text-sm max-w-xs mx-auto mb-8">
                   You can schedule posts for later under the 'Overview' tab
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {scheduledPosts.map((post) => (
                   <div
                     key={post._id}
-                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition"
+                    className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col relative"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 text-[17px] mb-1">
-                          {post.title}
-                        </h3>
-                        <p className="text-blue-600 text-[13px] font-bold flex items-center gap-1.5 mb-2">
-                          <Calendar size={14} /> Scheduled for: {new Date(post.scheduledAt).toLocaleString()}
-                        </p>
-                        <div className="text-[13px] text-gray-500 flex gap-5">
-                           <span>#{post.tags?.join(", #") || "No tags"}</span>
+                    {/* Card Actions */}
+                    <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <button
+                        onClick={() => navigate(`/post/${post._id}`)}
+                        className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
+                        title="Preview post"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeletePost(post._id)}
+                        className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-red-500 shadow-lg hover:bg-red-600 hover:text-white transition-all transform hover:scale-110"
+                        title="Cancel schedule"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+
+                    {/* Image Area */}
+                    <div className="relative h-44 overflow-hidden bg-gray-100 italic flex items-center justify-center text-gray-300">
+                      <Calendar size={48} className="opacity-20" />
+                      <div className="absolute inset-0 bg-blue-600/5 mix-blend-multiply"></div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="px-3 py-1 bg-blue-50 rounded-lg text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100/50">
+                          Scheduled
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => navigate(`/post/${post._id}`)}
-                          className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition"
-                          title="Preview post"
-                        >
-                          <Eye size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePost(post._id)}
-                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
-                          title="Cancel/Delete post"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                      <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2 leading-tight">
+                        {post.title}
+                      </h3>
+                      
+                      {/* Priority Time Label */}
+                      <div className="bg-gray-50 rounded-2xl p-4 mt-auto border border-gray-100/50 group-hover:border-blue-100 group-hover:bg-blue-50/50 transition-colors duration-300">
+                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Publishing at</p>
+                         <div className="flex items-center gap-2 text-gray-900 font-bold text-[13px]">
+                            <Calendar size={14} className="text-blue-500" />
+                            {new Date(post.scheduledAt).toLocaleString(undefined, { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            })}
+                         </div>
                       </div>
                     </div>
                   </div>

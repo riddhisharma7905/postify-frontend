@@ -15,7 +15,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("authToken"));
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");

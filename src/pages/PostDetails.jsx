@@ -14,17 +14,19 @@ const PostDetails = () => {
   const [recommended, setRecommended] = useState([]);
   const token = localStorage.getItem("authToken");
 
+  const parseToken = (t) => {
+    try { return JSON.parse(atob(t.split(".")[1])); } catch { return null; }
+  };
 
-  const userId = token ? JSON.parse(atob(token.split(".")[1]))?.id : null;
+  const userId = token ? parseToken(token)?.id : null;
 
   const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
-      // Pass the user ID to the backend if they're logged in, to allow author viewing
       const headers = {};
       if (token) {
-        const decoded = JSON.parse(atob(token.split(".")[1]));
-        headers['x-user-id'] = decoded.id;
+        const decoded = parseToken(token);
+        if (decoded) headers['x-user-id'] = decoded.id;
       }
       
       const data = await request(`/api/posts/${id}`, "GET", null, headers);
@@ -222,9 +224,7 @@ const PostDetails = () => {
               <span
                 className="font-medium text-blue-600 cursor-pointer hover:underline"
                 onClick={() => {
-                  const currentUserId = JSON.parse(
-                    atob(token?.split(".")[1] || "{}")
-                  )?.id;
+                  const currentUserId = parseToken(token)?.id;
                   if (post.author._id === currentUserId) navigate("/dashboard");
                   else navigate(`/author/${post.author._id}`);
                 }}

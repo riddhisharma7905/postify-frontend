@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, Loader2, Calendar, Tag, Image, ChevronDown } from "lucide-react";
 import { request } from "../api";
+
+const CATEGORIES = ["Technology", "Business", "Education", "Career", "Lifestyle", "Health", "Travel", "Others"];
 
 const CreatePost = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
+  const [category, setCategory] = useState("Others");
+  const [imageUrl, setImageUrl] = useState("");
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -38,7 +42,9 @@ const CreatePost = () => {
         {
           title,
           content,
-          tags: tags.split(",").map((t) => t.trim()),
+          tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+          category,
+          image: imageUrl.trim() || null,
           scheduledAt: isScheduled ? scheduledAt : null,
         },
         { Authorization: `Bearer ${token}` }
@@ -54,7 +60,6 @@ const CreatePost = () => {
     }
   };
 
-  // Calculate min/max for scheduling (max 3 days)
   const now = new Date();
   const getLocalDateTimeString = (date) => {
     const y = date.getFullYear();
@@ -71,7 +76,7 @@ const CreatePost = () => {
   const maxDateStr = getLocalDateTimeString(maxDate);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center py-10 px-4 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center py-10 px-4 font-sans">
       <div className="w-full max-w-4xl flex items-center justify-between mb-8">
         <button
           onClick={() => navigate("/dashboard")}
@@ -82,13 +87,10 @@ const CreatePost = () => {
         </button>
 
         <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Create New Post</h1>
-        <div className="w-[82px]"></div> {/* Spacer */}
+        <div className="w-[82px]"></div>
       </div>
 
-      <form
-        onSubmit={handlePublish}
-        className="w-full max-w-4xl space-y-8"
-      >
+      <form onSubmit={handlePublish} className="w-full max-w-4xl space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-100 text-red-600 px-5 py-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-300 flex items-center gap-3">
              <span className="text-lg">⚠️</span>
@@ -96,9 +98,10 @@ const CreatePost = () => {
           </div>
         )}
 
+        {/* Main Content Card */}
         <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-6">
           <div>
-            <label className="block text-[13px] font-bold text-gray-600 uppercase tracking-wider mb-3">
+            <label className="block text-[13px] font-bold text-gray-500 uppercase tracking-wider mb-3">
               Post Title
             </label>
             <input
@@ -106,13 +109,13 @@ const CreatePost = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              placeholder="Give your thoughts a title..."
-              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all placeholder:text-gray-400"
+              placeholder="Give your thoughts a headline..."
+              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 text-lg font-semibold transition-all placeholder:text-gray-300 placeholder:font-normal"
             />
           </div>
 
           <div>
-            <label className="block text-[13px] font-bold text-gray-600 uppercase tracking-wider mb-3">
+            <label className="block text-[13px] font-bold text-gray-500 uppercase tracking-wider mb-3">
               Content
             </label>
             <textarea
@@ -120,22 +123,68 @@ const CreatePost = () => {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               required
-              placeholder="What's on your mind?"
-              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all resize-none placeholder:text-gray-400"
+              placeholder="What's on your mind? Share your ideas, insights, and stories..."
+              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all resize-none placeholder:text-gray-300"
             ></textarea>
           </div>
+        </div>
 
+        {/* Metadata Card */}
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 space-y-6">
+          <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wider">Post Details</h3>
+
+          {/* Category Dropdown */}
           <div>
-            <label className="block text-[13px] font-bold text-gray-600 uppercase tracking-wider mb-3">
-              Tags (comma separated)
+            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+              <Tag size={15} className="text-blue-500" /> Category
+            </label>
+            <div className="relative">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-semibold transition-all appearance-none cursor-pointer"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+              <Tag size={15} className="text-blue-500" /> Tags
+              <span className="text-gray-400 font-normal">(comma separated)</span>
             </label>
             <input
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="e.g. Technology, Lifestyle, AI"
-              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all placeholder:text-gray-400"
+              placeholder="e.g. React, AI, Startups"
+              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all placeholder:text-gray-300"
             />
+          </div>
+
+          {/* Cover Image URL */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+              <Image size={15} className="text-blue-500" /> Cover Image URL
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/your-image.jpg"
+              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all placeholder:text-gray-300"
+            />
+            {imageUrl && (
+              <div className="mt-3 rounded-2xl overflow-hidden h-40 bg-gray-100">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={() => setImageUrl("")} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -148,7 +197,7 @@ const CreatePost = () => {
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 tracking-tight">Schedule Post</h3>
-                <p className="text-[13px] text-gray-600 mt-0.5">Pick a time in the next 3 days</p>
+                <p className="text-[13px] text-gray-500 mt-0.5">Pick a time in the next 3 days</p>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -177,7 +226,7 @@ const CreatePost = () => {
           )}
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 pb-10">
+        <div className="flex justify-end gap-3 pt-2 pb-10">
           <button
             type="button"
             onClick={() => navigate("/dashboard")}
@@ -206,4 +255,3 @@ const CreatePost = () => {
 };
 
 export default CreatePost;
-

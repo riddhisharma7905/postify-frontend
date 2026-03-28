@@ -132,11 +132,11 @@ const AuthorProfile = () => {
         <div className="flex flex-col md:flex-row items-center justify-between mb-10">
           <div className="flex items-center gap-4 mb-4 md:mb-0">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">
+              <h1 className="text-3xl font-bold text-gray-900 leading-tight">
                 {author.name}'s Profile 👤
               </h1>
-              <p className="text-gray-600">
-                Explore all posts written by {author.name}.
+              <p className="text-gray-600 mt-2 text-lg max-w-2xl italic font-medium">
+                {author.bio || `Explore all posts written by ${author.name}.`}
               </p>
             </div>
           </div>
@@ -219,29 +219,47 @@ const AuthorProfile = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {posts.map((post) => (
                 <div
                   key={post._id}
                   onClick={() => navigate(`/post/${post._id}`)}
-                  className="bg-white p-6 rounded-xl shadow hover:shadow-md transition cursor-pointer"
+                  className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-100 flex flex-col"
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-800 text-lg mb-1">
-                        {post.title}
-                      </h3>
-                      <div className="text-sm text-gray-600 flex gap-4 mt-1">
-                        <span className="flex items-center gap-1">
-                          <Eye size={14} /> {post.views || 0} views
+                  {/* Card Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={post.image || "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&auto=format&fit=crop"}
+                      alt={post.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 right-4 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[11px] font-bold text-gray-600 shadow-sm uppercase tracking-wider">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-3 line-clamp-2 leading-snug">
+                      {post.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-6 flex-1">
+                      {post.content}
+                    </p>
+
+                    {/* Footer Stats */}
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                      <div className="flex gap-4 text-xs font-semibold text-gray-500">
+                        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                          <Eye size={14} /> {post.views || 0}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <Heart size={14} /> {post.likes?.length || 0} likes
+                        <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg group-hover:bg-pink-50 group-hover:text-pink-600 transition-colors">
+                          <Heart size={14} /> {post.likes?.length || 0}
                         </span>
                       </div>
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                         <FileText size={16} />
+                      </div>
                     </div>
                   </div>
                 </div>
