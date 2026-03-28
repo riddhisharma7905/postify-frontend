@@ -1,9 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PlusCircle,
-  Edit3,
-  Trash2,
   Eye,
   Heart,
   MessageCircle,
@@ -11,8 +9,30 @@ import {
   Users,
   FileText,
   UserPlus,
+  Trash2,
+  TrendingUp,
+  Mail,
+  User,
+  Phone,
+  Info,
 } from "lucide-react";
-import { request } from "../api"; 
+import { 
+  BarChart, 
+  Bar, 
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  PieChart,
+  Pie
+} from "recharts";
+import { request } from "../api";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -21,6 +41,16 @@ const Dashboard = () => {
   const [posts, setPosts] = useState([]);
   const [userData, setUserData] = useState({});
   const navigate = useNavigate();
+
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    email: "",
+    birthdate: "",
+    sex: "",
+    bio: "",
+    phoneNumber: ""
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     const token = localStorage.getItem("authToken");
@@ -32,9 +62,7 @@ const Dashboard = () => {
 
     try {
       setLoading(true);
-
-      // ✅ Using request() helper instead of fetch
-      const [postsData, userData] = await Promise.all([
+      const [postsData, userDataRes] = await Promise.all([
         request("/api/posts/user/me", "GET", null, {
           Authorization: `Bearer ${token}`,
         }),
@@ -44,7 +72,15 @@ const Dashboard = () => {
       ]);
 
       setPosts(postsData);
-      setUserData(userData);
+      setUserData(userDataRes);
+      setProfileForm({
+        name: userDataRes.name || "",
+        email: userDataRes.email || "",
+        birthdate: userDataRes.birthdate ? new Date(userDataRes.birthdate).toISOString().split('T')[0] : "",
+        sex: userDataRes.sex || "",
+        bio: userDataRes.bio || "",
+        phoneNumber: userDataRes.phoneNumber || ""
+      });
     } catch (err) {
       console.error("Dashboard fetch error:", err);
       if (err.message.includes("401")) {
@@ -62,17 +98,35 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setIsUpdating(true);
+    const token = localStorage.getItem("authToken");
+    try {
+      const updatedUser = await request("/api/user/profile", "PUT", profileForm, {
+        Authorization: `Bearer ${token}`
+      });
+      setUserData(updatedUser);
+      alert("Profile updated successfully!");
+    } catch (err) {
+      alert("Failed to update profile: " + err.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleVisibilityChange = useCallback(() => {
+    if (document.visibilityState === "visible") {
+      fetchDashboardData();
+    }
+  }, [fetchDashboardData]);
+
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchDashboardData();
-      }
-    };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchDashboardData]);
+  }, [handleVisibilityChange]);
 
   const handleDeletePost = async (postId) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
@@ -87,17 +141,39 @@ const Dashboard = () => {
     }
   };
 
-  if (loading)
+  const publishedPosts = posts.filter(p => !p.scheduledAt || new Date(p.scheduledAt) <= new Date());
+  const scheduledPosts = posts.filter(p => p.scheduledAt && new Date(p.scheduledAt) > new Date());
+
+  // Process data for Total Reach Analysis Line Chart
+  const reachData = useMemo(() => {
+    if (!publishedPosts.length) return [];
+    
+    // Sort chronologically
+    const sorted = [...publishedPosts].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    
+    let cumulativeReach = 0;
+    return sorted.map(post => {
+      cumulativeReach += (post.views || 0);
+      return {
+        date: new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        reach: cumulativeReach,
+        postTitle: post.title.substring(0, 15) + '...'
+      };
+    });
+  }, [publishedPosts]);
+
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-500 text-sm">Loading dashboard...</p>
         </div>
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -111,16 +187,13 @@ const Dashboard = () => {
         </div>
       </div>
     );
+  }
 
-  const totalPosts = posts.length;
-  const totalLikes = posts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
-  const totalViews = posts.reduce((acc, p) => acc + (p.views || 0), 0);
-  const followersCount = Array.isArray(userData.followers)
-    ? userData.followers.length
-    : 0;
-  const followingCount = Array.isArray(userData.following)
-    ? userData.following.length
-    : 0;
+  const totalPosts = publishedPosts.length;
+  const totalLikes = publishedPosts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
+  const totalViews = publishedPosts.reduce((acc, p) => acc + (p.views || 0), 0);
+  const followersCount = Array.isArray(userData.followers) ? userData.followers.length : 0;
+  const followingCount = Array.isArray(userData.following) ? userData.following.length : 0;
 
   const stats = [
     { title: "Total Posts", value: totalPosts, icon: FileText, color: "text-blue-500" },
@@ -130,77 +203,179 @@ const Dashboard = () => {
     { title: "Following", value: followingCount, icon: UserPlus, color: "text-indigo-500" },
   ];
 
+  const tabs = ["Overview", "My Posts", "Scheduled", "Analytics", "Profile"];
+
+
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <main className="flex-1 container mx-auto px-6 py-10">
-        <div className="flex flex-col md:flex-row items-center justify-between mb-10">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Welcome back, {userData.name || "User"} 👋
-            </h1>
-            <p className="text-gray-500">Here's your latest activity overview</p>
+    <div className="min-h-screen bg-white flex flex-col font-sans">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+        
+        {/* Welcome Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center text-xl font-medium text-gray-800 shrink-0">
+              {userData.name ? userData.name.charAt(0).toUpperCase() : "U"}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                Welcome back, {userData.name || "Sarah"}!
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage your content and track your progress
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => navigate("/createpost")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
+          >
+            <PlusCircle size={18} /> Write New Post
+          </button>
         </div>
 
-        <div className="border-b flex gap-6 mb-6 overflow-x-auto">
-          {["overview", "posts"].map((tab) => (
-            <button
-              key={tab}
-              className={`pb-2 capitalize text-sm font-medium transition-colors ${
-                activeTab === tab
-                  ? "text-blue-600 border-b-2 border-blue-600"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Tab Navigation */}
+        <div className="bg-gray-50/80 p-1.5 rounded-xl flex items-center gap-1 mb-8 border border-gray-100 w-full overflow-x-auto">
+          {tabs.map((tab) => {
+            const tabKey = tab.toLowerCase();
+            const isActive = activeTab === tabKey;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tabKey)}
+                className={`flex-1 min-w-[100px] py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  isActive
+                    ? "bg-white text-gray-900 border border-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-100/50"
+                }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
         </div>
 
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* 5 Stats Cards on Head */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {stats.map((stat, i) => (
                 <div
                   key={i}
-                  className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+                  className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] flex flex-col justify-between hover:border-gray-300 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">{stat.title}</p>
-                      <h2 className="text-2xl font-bold text-gray-800">
-                        {stat.value}
-                      </h2>
+                  <div className="flex justify-between items-start mb-6">
+                    <p className="text-[13px] font-medium text-gray-600">{stat.title}</p>
+                    <div className={`${stat.color}`}>
+                      <stat.icon size={20} className="opacity-90" strokeWidth={2.5}/>
                     </div>
-                    <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-gray-900 mb-1 tracking-tight">
+                      {stat.value}
+                    </h3>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow text-center">
-              <Calendar size={24} className="text-blue-500 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                Write a New Post
-              </h3>
-              <p className="text-gray-500 text-sm mb-4">
-                Share your latest ideas and insights with the world.
-              </p>
-              <button
-                onClick={() => navigate("/createpost")}
-                className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition"
-              >
-                Create Post
-              </button>
+            {/* Content Below Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Performance */}
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <TrendingUp size={22} className="text-blue-500" strokeWidth={2.5} />
+                    <h2 className="text-[19px] font-bold text-gray-900 tracking-tight">Recent Performance</h2>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab("my posts")}
+                    className="text-[13px] font-semibold text-blue-500 hover:text-blue-600 px-3 py-1.5 bg-blue-50 rounded-lg transition-colors"
+                  >
+                    View All
+                  </button>
+                </div>
+                <div className="space-y-3 flex-1">
+                  {publishedPosts.length > 0 ? (
+                    publishedPosts.slice(0, 4).map((post) => (
+                      <div
+                        key={post._id}
+                        className="p-4 bg-gray-50/80 rounded-2xl hover:bg-gray-100/80 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/post/${post._id}`)}
+                      >
+                        <h3 className="font-semibold text-gray-900 mb-2 truncate text-[15px]">{post.title}</h3>
+                        <div className="flex items-center gap-5 text-[13px] text-gray-500">
+                          <span className="flex items-center gap-1.5"><Eye size={15} /> {post.views || 0}</span>
+                          <span className="flex items-center gap-1.5"><Heart size={15} /> {post.likes?.length || 0}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
+                      <p className="text-gray-500 text-sm">No recent posts found.</p>
+                      <button 
+                        onClick={() => navigate("/createpost")}
+                        className="mt-3 text-sm text-blue-500 font-medium hover:underline"
+                      >
+                        Create your first post
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Publishing Schedule */}
+              <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7 flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar size={22} className="text-blue-500" strokeWidth={2.5}/>
+                    <h2 className="text-[19px] font-bold text-gray-900 tracking-tight">Publishing Schedule</h2>
+                  </div>
+                  <button 
+                    onClick={() => setActiveTab("scheduled")}
+                    className="text-[13px] font-semibold text-blue-500 hover:text-blue-600 px-3 py-1.5 bg-blue-50 rounded-lg transition-colors"
+                  >
+                    View All
+                  </button>
+                </div>
+                <div className="flex-1 space-y-4">
+                  {scheduledPosts.length > 0 ? (
+                    scheduledPosts
+                      .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))
+                      .map(post => (
+                        <div key={post._id} className="p-4 bg-gray-50/80 rounded-2xl flex justify-between items-center group hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
+                          <div>
+                            <h3 className="font-semibold text-gray-900 mb-1 truncate text-[14px]">{post.title}</h3>
+                            <p className="text-[11px] text-gray-500 font-medium flex items-center gap-1.5">
+                              <Calendar size={12} /> {new Date(post.scheduledAt).toLocaleString()}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => navigate(`/post/${post._id}`)}
+                            className="bg-white p-2 rounded-xl text-gray-400 hover:text-blue-500 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
+                          >
+                            <Eye size={16} />
+                          </button>
+                        </div>
+                      ))
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center py-12">
+                      <p className="text-gray-500 text-sm mb-5 font-medium">No scheduled posts</p>
+                      <button onClick={() => navigate("/createpost")} className="px-5 py-2.5 bg-white border border-gray-200 shadow-sm text-gray-700 text-[13px] font-semibold rounded-xl hover:bg-gray-50 hover:text-gray-900 transition-all">
+                        Schedule a Post
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {activeTab === "posts" && (
-          <div>
+        {/* Existing Posts Tab Content */}
+        {activeTab === "my posts" && (
+          <div className="animate-in fade-in duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">My Posts</h2>
+              <h2 className="text-xl font-bold text-gray-900">My Posts</h2>
               <button
                 onClick={() => navigate("/createpost")}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition"
@@ -209,38 +384,38 @@ const Dashboard = () => {
               </button>
             </div>
 
-            {posts.length === 0 ? (
-              <div className="bg-white p-12 rounded-xl shadow text-center">
+            {publishedPosts.length === 0 ? (
+              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
                 <FileText size={48} className="text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-lg mb-2">No posts yet</p>
+                <p className="text-gray-500 text-lg mb-2 font-medium">No posts yet</p>
                 <p className="text-gray-400 text-sm">
                   Start writing your first post to see it here
                 </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {posts.map((post) => (
+                {publishedPosts.map((post) => (
                   <div
                     key={post._id}
-                    className="bg-white p-6 rounded-xl shadow hover:shadow-md transition"
+                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition"
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg mb-1">
+                        <h3 className="font-semibold text-gray-900 text-[17px] mb-1">
                           {post.title}
                         </h3>
-                        <p className="text-gray-500 text-sm mb-2">
+                        <p className="text-gray-400 text-[13px] mb-3">
                           {new Date(post.createdAt).toLocaleDateString()}
                         </p>
-                        <div className="text-sm text-gray-500 flex gap-4">
-                          <span className="flex items-center gap-1">
-                            <Eye size={14} /> {post.views || 0} views
+                        <div className="text-[13px] text-gray-500 flex gap-5">
+                          <span className="flex items-center gap-1.5">
+                            <Eye size={16} /> {post.views || 0} views
                           </span>
-                          <span className="flex items-center gap-1">
-                            <Heart size={14} /> {post.likes?.length || 0} likes
+                          <span className="flex items-center gap-1.5">
+                            <Heart size={16} /> {post.likes?.length || 0} likes
                           </span>
-                          <span className="flex items-center gap-1">
-                            <MessageCircle size={14} />{" "}
+                          <span className="flex items-center gap-1.5">
+                            <MessageCircle size={16} />{" "}
                             {post.comments?.length || 0} comments
                           </span>
                         </div>
@@ -249,14 +424,14 @@ const Dashboard = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => navigate(`/post/${post._id}`)}
-                          className="text-gray-600 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition"
+                          className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition"
                           title="View post"
                         >
                           <Eye size={18} />
                         </button>
                         <button
                           onClick={() => handleDeletePost(post._id)}
-                          className="text-gray-600 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
+                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
                           title="Delete post"
                         >
                           <Trash2 size={18} />
@@ -269,9 +444,322 @@ const Dashboard = () => {
             )}
           </div>
         )}
+
+        {/* Scheduled Posts Tab Content */}
+        {activeTab === "scheduled" && (
+          <div className="animate-in fade-in duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Scheduled Posts</h2>
+              <div className="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                <Calendar size={20} />
+              </div>
+            </div>
+
+            {scheduledPosts.length === 0 ? (
+              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center">
+                <Calendar size={48} className="text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 text-lg mb-2 font-medium">No scheduled posts</p>
+                <p className="text-gray-400 text-sm">
+                  You can schedule posts for later under the 'Overview' tab
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {scheduledPosts.map((post) => (
+                  <div
+                    key={post._id}
+                    className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 text-[17px] mb-1">
+                          {post.title}
+                        </h3>
+                        <p className="text-blue-600 text-[13px] font-bold flex items-center gap-1.5 mb-2">
+                          <Calendar size={14} /> Scheduled for: {new Date(post.scheduledAt).toLocaleString()}
+                        </p>
+                        <div className="text-[13px] text-gray-500 flex gap-5">
+                           <span>#{post.tags?.join(", #") || "No tags"}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/post/${post._id}`)}
+                          className="text-gray-400 hover:text-blue-600 p-2 rounded-lg hover:bg-blue-50 transition"
+                          title="Preview post"
+                        >
+                          <Eye size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post._id)}
+                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition"
+                          title="Cancel/Delete post"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Analytics Tab Content */}
+        {activeTab === "analytics" && (
+          <div className="animate-in fade-in duration-500 space-y-8 pb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+               <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                 <div className="flex justify-between items-center mb-8">
+                   <div>
+                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">Total Reach Analysis</h2>
+                     <p className="text-sm text-gray-500 mt-1">Cumulative audience growth over time</p>
+                   </div>
+                 </div>
+                 <div className="h-[350px] w-full">
+                   <ResponsiveContainer width="100%" height="100%">
+                     <AreaChart data={reachData}>
+                       <defs>
+                         <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                           <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15}/>
+                           <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                         </linearGradient>
+                       </defs>
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                       <XAxis 
+                         dataKey="date" 
+                         axisLine={false} 
+                         tickLine={false} 
+                         tick={{fill: '#9CA3AF', fontSize: 12}} 
+                         dy={10} 
+                       />
+                       <YAxis 
+                         axisLine={false} 
+                         tickLine={false} 
+                         tick={{fill: '#9CA3AF', fontSize: 12}} 
+                       />
+                       <Tooltip 
+                         contentStyle={{
+                           borderRadius: '16px', 
+                           border: 'none', 
+                           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                           padding: '12px'
+                         }}
+                         labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                       />
+                       <Area 
+                         type="monotone" 
+                         dataKey="reach" 
+                         stroke="#3B82F6" 
+                         strokeWidth={3}
+                         fillOpacity={1} 
+                         fill="url(#colorReach)" 
+                         name="Total Views"
+                       />
+                     </AreaChart>
+                   </ResponsiveContainer>
+                 </div>
+               </div>
+
+               <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col">
+                 <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-2">Metrics Distribution</h2>
+                 <p className="text-sm text-gray-500 mb-8">Overview of your engagement stats</p>
+                 <div className="flex-1 flex items-center justify-center">
+                   <div className="h-64 w-64 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Views', value: totalViews, color: '#3B82F6' },
+                              { name: 'Likes', value: totalLikes, color: '#EC4899' },
+                              { name: 'Followers', value: followersCount, color: '#A855F7' }
+                            ]}
+                            innerRadius={70}
+                            outerRadius={90}
+                            paddingAngle={8}
+                            dataKey="value"
+                          >
+                            {[
+                              { color: '#3B82F6' },
+                              { color: '#EC4899' },
+                              { color: '#A855F7' }
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Growth</span>
+                         <span className="text-2xl font-black text-gray-900">Total</span>
+                      </div>
+                   </div>
+                 </div>
+                 <div className="mt-8 space-y-4">
+                   {[
+                     { label: 'Views', value: totalViews, color: 'bg-blue-500' },
+                     { label: 'Likes', value: totalLikes, color: 'bg-pink-500' },
+                     { label: 'Followers', value: followersCount, color: 'bg-purple-500' }
+                   ].map(item => (
+                     <div key={item.label} className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <div className={`h-3 w-3 rounded-full ${item.color}`}></div>
+                         <span className="text-sm font-semibold text-gray-600">{item.label}</span>
+                       </div>
+                       <span className="text-sm font-bold text-gray-900">{item.value}</span>
+                     </div>
+                   ))}
+                 </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile Tab Content */}
+        {activeTab === "profile" && (
+          <div className="animate-in fade-in duration-500 max-w-5xl mx-auto pb-16">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Account Management (Side) */}
+              <div className="space-y-6">
+                <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm text-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-gray-800">
+                    {userData.name?.charAt(0).toUpperCase()}
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">{userData.name}</h2>
+                  <p className="text-sm text-gray-600 mb-6">{userData.email}</p>
+                  <div className="pt-6 border-t border-gray-50 flex justify-around">
+                     <div>
+                       <p className="text-lg font-bold text-gray-900">{followersCount}</p>
+                       <p className="text-[11px] font-bold text-gray-600 uppercase">Followers</p>
+                     </div>
+                     <div className="w-px h-8 bg-gray-50"></div>
+                     <div>
+                       <p className="text-lg font-bold text-gray-900">{followingCount}</p>
+                       <p className="text-[11px] font-bold text-gray-600 uppercase">Following</p>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+                  <h3 className="text-sm font-bold text-gray-900 mb-4 px-2">Account Status</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3 p-3 bg-green-50 rounded-2xl">
+                      <div className="h-8 w-8 bg-white rounded-lg flex items-center justify-center text-green-500 shadow-sm">
+                        <Info size={16} />
+                      </div>
+                      <span className="text-[13px] font-bold text-green-700">Verified Professional</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Information (Main) */}
+              <div className="lg:col-span-2">
+                <form onSubmit={handleProfileUpdate} className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-10">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Profile Information</h2>
+                    <p className="text-sm text-gray-500">Update your personal details and public bio.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <User size={12} strokeWidth={3} /> Full Name
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({...profileForm, name: e.target.value})}
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <Mail size={12} strokeWidth={3} /> Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <Calendar size={12} strokeWidth={3} /> Birthdate
+                      </label>
+                      <input
+                        type="date"
+                        value={profileForm.birthdate}
+                        onChange={(e) => setProfileForm({...profileForm, birthdate: e.target.value})}
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <UserPlus size={12} strokeWidth={3} /> Sex
+                      </label>
+                      <select
+                        value={profileForm.sex}
+                        onChange={(e) => setProfileForm({...profileForm, sex: e.target.value})}
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all appearance-none"
+                      >
+                         <option value="">Select Gender</option>
+                         <option value="Male">Male</option>
+                         <option value="Female">Female</option>
+                         <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <Phone size={12} strokeWidth={3} /> Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={profileForm.phoneNumber}
+                        onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})}
+                        placeholder="+1 (555) 000-0000"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <PlusCircle size={12} strokeWidth={3} /> Professional Bio
+                      </label>
+                      <textarea
+                        rows="4"
+                        value={profileForm.bio}
+                        onChange={(e) => setProfileForm({...profileForm, bio: e.target.value})}
+                        placeholder="Tell the world about yourself..."
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all resize-none"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <button
+                      disabled={isUpdating}
+                      className="w-full py-5 bg-gray-900 text-white font-bold rounded-[20px] hover:bg-black transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-3 active:scale-[0.98]"
+                    >
+                      {isUpdating ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Updating Profile...
+                        </>
+                      ) : "Save Settings"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
 };
 
 export default Dashboard;
+

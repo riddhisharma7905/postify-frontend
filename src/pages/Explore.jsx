@@ -144,7 +144,7 @@ const styles = {
   subtitle: {
     maxWidth: "600px",
     margin: "10px auto 30px",
-    color: "#555",
+    color: "#333",
     fontSize: "1.1rem",
   },
   searchContainer: {
@@ -191,12 +191,12 @@ const styles = {
   },
   cardExcerpt: {
     fontSize: "0.95rem",
-    color: "#555",
+    color: "#333",
     marginBottom: "10px",
   },
   meta: {
     fontSize: "0.85rem",
-    color: "#777",
+    color: "#444",
     marginBottom: "10px",
   },
   cardTag: {

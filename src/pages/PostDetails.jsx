@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2 } from "lucide-react";
 import { request } from "../api"; // ✅ centralized API helper
@@ -14,20 +14,27 @@ const PostDetails = () => {
   const [recommended, setRecommended] = useState([]);
   const token = localStorage.getItem("authToken");
 
-  const viewCounted = useRef(false);
+
   const userId = token ? JSON.parse(atob(token.split(".")[1]))?.id : null;
 
   const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await request(`/api/posts/${id}`);
+      // Pass the user ID to the backend if they're logged in, to allow author viewing
+      const headers = {};
+      if (token) {
+        const decoded = JSON.parse(atob(token.split(".")[1]));
+        headers['x-user-id'] = decoded.id;
+      }
+      
+      const data = await request(`/api/posts/${id}`, "GET", null, headers);
       setPost(data);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, token]);
 
   const fetchRecommendations = useCallback(async () => {
     try {
@@ -39,11 +46,21 @@ const PostDetails = () => {
     }
   }, [id]);
 
+  const isViewIncremented = useRef(false);
+
   useEffect(() => {
     fetchPost();
     fetchRecommendations();
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [id]);
+
+    // Increment view count separately
+    if (!isViewIncremented.current && id) {
+       isViewIncremented.current = true;
+       request(`/api/posts/${id}/view`, "POST").catch(err => {
+         console.warn("View increment failed:", err);
+       });
+    }
+  }, [fetchPost, fetchRecommendations, id]);
 
   
   const handleLike = async () => {
@@ -155,7 +172,7 @@ const PostDetails = () => {
 
         <h1 className="text-3xl font-bold text-gray-800 mb-3">{post.title}</h1>
 
-        <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-6">
+        <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
           <span className="flex items-center gap-1">
             <Calendar size={14} />
             {new Date(post.createdAt).toLocaleDateString()}
@@ -164,7 +181,7 @@ const PostDetails = () => {
             onClick={handleLike}
             disabled={isLiking}
             className={`flex items-center gap-1 ${
-              hasLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+              hasLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"
             } ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <Heart
@@ -272,7 +289,7 @@ const PostDetails = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-600 text-sm">
                 No comments yet. Be the first to comment!
               </p>
             )}

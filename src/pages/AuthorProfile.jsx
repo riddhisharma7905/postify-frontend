@@ -135,7 +135,7 @@ const AuthorProfile = () => {
               <h1 className="text-2xl font-bold text-gray-800">
                 {author.name}'s Profile 👤
               </h1>
-              <p className="text-gray-500">
+              <p className="text-gray-600">
                 Explore all posts written by {author.name}.
               </p>
             </div>
@@ -158,7 +158,7 @@ const AuthorProfile = () => {
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Followers</p>
+                <p className="text-sm text-gray-600">Followers</p>
                 <h2 className="text-2xl font-bold text-gray-800">{followersCount}</h2>
               </div>
               <Users className="h-8 w-8 text-purple-500" />
@@ -168,7 +168,7 @@ const AuthorProfile = () => {
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Following</p>
+                <p className="text-sm text-gray-600">Following</p>
                 <h2 className="text-2xl font-bold text-gray-800">{followingCount}</h2>
               </div>
               <UserPlus className="h-8 w-8 text-indigo-500" />
@@ -178,7 +178,7 @@ const AuthorProfile = () => {
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Posts</p>
+                <p className="text-sm text-gray-600">Total Posts</p>
                 <h2 className="text-2xl font-bold text-gray-800">{posts.length}</h2>
               </div>
               <FileText className="h-8 w-8 text-blue-500" />
@@ -188,7 +188,7 @@ const AuthorProfile = () => {
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Views</p>
+                <p className="text-sm text-gray-600">Total Views</p>
                 <h2 className="text-2xl font-bold text-gray-800">{totalViews}</h2>
               </div>
               <Eye className="h-8 w-8 text-green-500" />
@@ -198,7 +198,7 @@ const AuthorProfile = () => {
           <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500">Total Likes</p>
+                <p className="text-sm text-gray-600">Total Likes</p>
                 <h2 className="text-2xl font-bold text-gray-800">{totalLikes}</h2>
               </div>
               <Heart className="h-8 w-8 text-pink-500" />
@@ -231,7 +231,7 @@ const AuthorProfile = () => {
                       <h3 className="font-semibold text-gray-800 text-lg mb-1">
                         {post.title}
                       </h3>
-                      <div className="text-sm text-gray-500 flex gap-4 mt-1">
+                      <div className="text-sm text-gray-600 flex gap-4 mt-1">
                         <span className="flex items-center gap-1">
                           <Eye size={14} /> {post.views || 0} views
                         </span>
@@ -240,7 +240,7 @@ const AuthorProfile = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="text-gray-400 text-sm">
+                    <div className="text-gray-500 text-sm">
                       {new Date(post.createdAt).toLocaleDateString()}
                     </div>
                   </div>
