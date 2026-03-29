@@ -36,6 +36,7 @@ import {
 } from "recharts";
 import { request } from "../api";
 import UserListModal from "../components/UserListModal";
+import NotificationPanel from "../components/NotificationPanel";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -85,6 +86,8 @@ const Dashboard = () => {
         birthdate: userDataRes.birthdate ? new Date(userDataRes.birthdate).toISOString().split('T')[0] : "",
         sex: userDataRes.sex || "",
         bio: userDataRes.bio || "",
+        profileImage: userDataRes.profileImage || "",
+        coverImage: userDataRes.coverImage || "",
         phoneNumber: userDataRes.phoneNumber || ""
       });
     } catch (err) {
@@ -259,12 +262,15 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => navigate("/createpost")}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
-          >
-            <PlusCircle size={18} /> Write New Post
-          </button>
+          <div className="flex items-center gap-3">
+            <NotificationPanel isLoggedIn={true} />
+            <button
+              onClick={() => navigate("/createpost")}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-sm"
+            >
+              <PlusCircle size={18} /> Write New Post
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -347,6 +353,9 @@ const Dashboard = () => {
                           </span>
                           <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-lg">
                             <Heart size={14} className="text-pink-400" /> {post.likes?.length || 0}
+                          </span>
+                          <span className="flex items-center gap-1.5 bg-white/50 px-2 py-0.5 rounded-lg">
+                            <MessageCircle size={14} className="text-blue-400" /> {post.commentCount || 0}
                           </span>
                         </div>
                       </div>
@@ -516,7 +525,7 @@ const Dashboard = () => {
                         <div className="flex gap-4 text-[11px] font-bold text-gray-400">
                           <span className="flex items-center gap-1.5"><Eye size={14} /> {post.views || 0}</span>
                           <span className="flex items-center gap-1.5"><Heart size={14} /> {post.likes?.length || 0}</span>
-                          <span className="flex items-center gap-1.5"><MessageCircle size={14} /> {post.comments?.length || 0}</span>
+                          <span className="flex items-center gap-1.5"><MessageCircle size={14} /> {post.commentCount || 0}</span>
                         </div>
                       </div>
                     </div>
@@ -728,8 +737,14 @@ const Dashboard = () => {
               {/* Account Management (Side) */}
               <div className="space-y-6">
                 <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm text-center">
-                  <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl font-bold text-gray-800">
-                    {userData.name?.charAt(0).toUpperCase()}
+                  <div className="relative group w-24 h-24 mx-auto mb-4">
+                    {userData.profileImage ? (
+                      <img src={userData.profileImage} alt={userData.name} className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md" />
+                    ) : (
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-3xl font-bold text-gray-800 border-4 border-white shadow-md">
+                        {userData.name?.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">{userData.name}</h2>
                   <p className="text-sm text-gray-600 mb-6">{userData.email}</p>
@@ -817,14 +832,35 @@ const Dashboard = () => {
                       </select>
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
-                        <Phone size={12} strokeWidth={3} /> Phone Number
-                      </label>
                       <input
                         type="tel"
                         value={profileForm.phoneNumber}
                         onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})}
                         placeholder="+1 (555) 000-0000"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <FileText size={12} strokeWidth={3} /> Profile Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={profileForm.profileImage}
+                        onChange={(e) => setProfileForm({...profileForm, profileImage: e.target.value})}
+                        placeholder="https://example.com/profile.jpg"
+                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                        <FileText size={12} strokeWidth={3} /> Cover Image URL
+                      </label>
+                      <input
+                        type="url"
+                        value={profileForm.coverImage}
+                        onChange={(e) => setProfileForm({...profileForm, coverImage: e.target.value})}
+                        placeholder="https://example.com/cover.jpg"
                         className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
                       />
                     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { request } from "../api";
-import { Search, TrendingUp, Eye, Heart, X, Loader2, Flame, Edit3, ArrowRight } from "lucide-react";
+import { Search, TrendingUp, Eye, Heart, X, Loader2, Flame, Edit3, ArrowRight, MessageCircle } from "lucide-react";
 
 function useDebounce(value, delay = 600) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -84,6 +84,7 @@ const HeroCard = ({ post, onClick }) => (
             <div className="flex gap-3 text-[11px] font-bold text-gray-400 mt-0.5">
               <span className="flex items-center gap-1"><Eye size={12} /> {post.views || 0}</span>
               <span className="flex items-center gap-1"><Heart size={12} /> {post.likes?.length || 0}</span>
+              <span className="flex items-center gap-1"><MessageCircle size={12} /> {post.commentCount || 0}</span>
             </div>
           </div>
         </div>
@@ -151,6 +152,7 @@ const PostCard = ({ post, onClick }) => (
         <div className="flex gap-3 text-[12px] font-bold text-gray-300">
           <span className="flex items-center gap-1"><Eye size={13} /> {post.views || 0}</span>
           <span className="flex items-center gap-1"><Heart size={13} /> {post.likes?.length || 0}</span>
+          <span className="flex items-center gap-1"><MessageCircle size={13} /> {post.commentCount || 0}</span>
         </div>
       </div>
     </div>

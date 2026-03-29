@@ -12,7 +12,7 @@ const PostDetails = () => {
   const [commentText, setCommentText] = useState("");
   const [isLiking, setIsLiking] = useState(false);
   const [recommended, setRecommended] = useState([]);
-  // Replies: { [commentId]: isOpen, replyText, isSubmitting }
+  // Replies: { [commentId]: isOpen, replyText, isSubmitting, showAll }
   const [replyState, setReplyState] = useState({});
   const token = localStorage.getItem("authToken");
 
@@ -99,10 +99,11 @@ const PostDetails = () => {
   const setReply = (commentId, patch) =>
     setReplyState((prev) => ({ ...prev, [commentId]: { ...prev[commentId], ...patch } }));
 
-  const handleToggleReply = (commentId) => {
+  const handleToggleReply = (commentId, tagName = "") => {
+    const isNowOpen = !replyState[commentId]?.isOpen;
     setReply(commentId, {
-      isOpen: !replyState[commentId]?.isOpen,
-      replyText: replyState[commentId]?.replyText || "",
+      isOpen: isNowOpen,
+      replyText: isNowOpen && tagName ? `@${tagName} ` : (replyState[commentId]?.replyText || ""),
     });
   };
 
@@ -168,6 +169,9 @@ const PostDetails = () => {
 
   const hasLiked = Array.isArray(post.likes) && post.likes.some((like) => like === userId || like?._id === userId);
 
+  // Calculate total comments (top level + all replies)
+  const totalComments = (post?.comments || []).reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0);
+
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-10 flex justify-center">
       <div className="max-w-3xl w-full bg-white shadow-md rounded-2xl p-8">
@@ -200,7 +204,7 @@ const PostDetails = () => {
             <Heart size={16} className={isLiking ? "animate-pulse" : ""} fill={hasLiked ? "red" : "none"} />
             {post.likes?.length || 0} likes
           </button>
-          <span className="flex items-center gap-1"><MessageCircle size={14} /> {post.comments?.length || 0} comments</span>
+          <span className="flex items-center gap-1"><MessageCircle size={14} /> {totalComments} comments</span>
           <span className="flex items-center gap-1">👁 {post.views || 0} views</span>
         </div>
 
@@ -244,7 +248,7 @@ const PostDetails = () => {
         {/* ── Comments Section ── */}
         <div className="mt-10 border-t pt-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Comments <span className="text-gray-400 text-sm font-normal">({post.comments?.length || 0})</span>
+            Comments <span className="text-gray-400 text-sm font-normal">({totalComments})</span>
           </h2>
 
           {/* New comment form */}
@@ -307,12 +311,12 @@ const PostDetails = () => {
                                 {new Date(comment.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                               </span>
                               {token && (
-                                <button
-                                  onClick={() => handleToggleReply(comment._id)}
-                                  className="text-[12px] font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
-                                >
-                                  <CornerDownRight size={12} />
-                                  {rs.isOpen ? "Cancel" : "Reply"}
+                                  <button
+                                    onClick={() => handleToggleReply(comment._id, comment.user?.name)}
+                                    className="text-[12px] font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
+                                  >
+                                    <CornerDownRight size={12} />
+                                    {rs.isOpen ? "Cancel" : "Reply"}
                                   {comment.replies?.length > 0 && (
                                     <span className="ml-1 bg-blue-100 text-blue-600 text-[10px] font-black px-1.5 py-0.5 rounded-full">
                                       {comment.replies.length}
@@ -340,7 +344,7 @@ const PostDetails = () => {
                     {(comment.replies?.length > 0 || rs.isOpen) && (
                       <div className="ml-11 mt-2 space-y-2">
                         {/* Existing replies */}
-                        {comment.replies?.map((reply) => (
+                        {comment.replies?.slice(0, rs.showAll ? comment.replies.length : 1).map((reply) => (
                           <div
                             key={reply._id}
                             className={`group/reply flex items-start gap-2.5 p-3 rounded-xl border text-sm ${
@@ -354,27 +358,50 @@ const PostDetails = () => {
                               {reply.user?.name?.charAt(0)?.toUpperCase() || "U"}
                             </div>
                             <div className="flex-1">
-                              <button
-                                onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                                className="font-bold text-gray-800 hover:text-blue-600 text-[12px] transition-colors"
-                              >
-                                {reply.user?.name || "User"}
-                              </button>
+                              <div className="flex items-center justify-between">
+                                <button
+                                  onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
+                                  className="font-bold text-gray-800 hover:text-blue-600 text-[12px] transition-colors"
+                                >
+                                  {reply.user?.name || "User"}
+                                </button>
+                                {reply.user?._id === userId && (
+                                  <button
+                                    onClick={() => handleDeleteReply(comment._id, reply._id)}
+                                    className="text-gray-300 hover:text-red-500 transition opacity-0 group-hover/reply:opacity-100 flex-shrink-0"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                )}
+                              </div>
                               <p className="text-[13px] mt-0.5">{reply.text}</p>
-                              <p className="text-[10px] text-gray-400 mt-1">
-                                {new Date(reply.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                              </p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <p className="text-[10px] text-gray-400">
+                                  {new Date(reply.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                </p>
+                                {token && (
+                                  <button
+                                    onClick={() => handleToggleReply(comment._id, reply.user?.name)}
+                                    className="text-[10px] font-bold text-blue-500/60 hover:text-blue-600 transition-colors"
+                                  >
+                                    Reply
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            {reply.user?._id === userId && (
-                              <button
-                                onClick={() => handleDeleteReply(comment._id, reply._id)}
-                                className="text-gray-300 hover:text-red-500 transition opacity-0 group-hover/reply:opacity-100 flex-shrink-0"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
                           </div>
                         ))}
+
+                        {/* Show more/less toggle */}
+                        {comment.replies?.length > 1 && (
+                          <button
+                            onClick={() => setReply(comment._id, { showAll: !rs.showAll })}
+                            className="text-[11px] font-black text-blue-600/60 hover:text-blue-600 transition-colors ml-9 mt-1 flex items-center gap-1.5"
+                          >
+                            <span className="w-4 h-[1px] bg-blue-200"></span>
+                            {rs.showAll ? "Hide replies" : `View ${comment.replies.length - 1} more replies...`}
+                          </button>
+                        )}
 
                         {/* Reply input */}
                         {rs.isOpen && (

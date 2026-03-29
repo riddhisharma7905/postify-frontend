@@ -7,7 +7,7 @@ function Header({ isLoggedIn, onLogout }) {
 
   const handleLogout = () => {
     onLogout();
-    navigate("/home", { replace: true }); 
+    navigate("/home", { replace: true });
   };
 
   const handleProtectedClick = (e, targetPath) => {
@@ -38,9 +38,8 @@ function Header({ isLoggedIn, onLogout }) {
         <Link
           to="/explore"
           onClick={(e) => handleProtectedClick(e, "/explore")}
-          className={`hover:text-blue-600 transition-colors ${
-            location.pathname === "/explore" ? "text-blue-600 font-semibold" : ""
-          }`}
+          className={`hover:text-blue-600 transition-colors ${location.pathname === "/explore" ? "text-blue-600 font-semibold" : ""
+            }`}
         >
           Explore
         </Link>
@@ -48,9 +47,8 @@ function Header({ isLoggedIn, onLogout }) {
         <Link
           to="/dashboard"
           onClick={(e) => handleProtectedClick(e, "/dashboard")}
-          className={`hover:text-blue-600 transition-colors ${
-            location.pathname === "/dashboard" ? "text-blue-600 font-semibold" : ""
-          }`}
+          className={`hover:text-blue-600 transition-colors ${location.pathname === "/dashboard" ? "text-blue-600 font-semibold" : ""
+            }`}
         >
           Dashboard
         </Link>
@@ -65,9 +63,8 @@ function Header({ isLoggedIn, onLogout }) {
         ) : (
           <Link
             to="/login"
-            className={`hover:text-blue-600 transition-colors ${
-              location.pathname === "/login" ? "text-blue-600 font-semibold" : ""
-            }`}
+            className={`hover:text-blue-600 transition-colors ${location.pathname === "/login" ? "text-blue-600 font-semibold" : ""
+              }`}
           >
             Login
           </Link>
