@@ -174,22 +174,6 @@ export default function NotificationPanel() {
     }
   };
 
-  const handleClearAll = async () => {
-    // Optimistic UI update for instantaneous feel
-    setNotifications([]);
-    setUnreadCount(0);
-    
-    try {
-      await request("/api/notifications/clear-all", "DELETE", null, {
-        Authorization: `Bearer ${token}`,
-      });
-    } catch (err) {
-      console.error("Clear all error:", err);
-      // Re-fetch on error to stay in sync
-      fetchNotifications();
-    }
-  };
-
   useEffect(() => {
     if (open) fetchNotifications();
   }, [open, fetchNotifications]);
@@ -272,12 +256,6 @@ export default function NotificationPanel() {
                 className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors"
               >
                 Mark all read
-              </button>
-              <button
-                onClick={handleClearAll}
-                className="text-[10px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors"
-              >
-                Clear all
               </button>
             </div>
             <button
