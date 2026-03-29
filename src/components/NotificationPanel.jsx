@@ -27,7 +27,7 @@ function timeAgo(dateStr) {
     day: "numeric",
   });
 }
-
+          
 // ── Notification type metadata ────────────────────────────────────────────────
 const TYPE_META = {
   like: {
