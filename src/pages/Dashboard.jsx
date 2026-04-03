@@ -54,9 +54,13 @@ const Dashboard = () => {
     birthdate: "",
     sex: "",
     bio: "",
-    phoneNumber: ""
+    phoneNumber: "",
+    profileImage: "",
+    coverImage: "",
   });
   const [isUpdating, setIsUpdating] = useState(false);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     const token = localStorage.getItem("authToken");
@@ -102,6 +106,39 @@ const Dashboard = () => {
       setLoading(false);
     }
   }, [navigate]);
+
+  const handleImageUpload = async (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const token = localStorage.getItem("authToken");
+
+    if (type === "profile") setUploadingProfile(true);
+    else setUploadingCover(true);
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL || ""}/api/user/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      setProfileForm((prev) => ({ ...prev, [type === "profile" ? "profileImage" : "coverImage"]: data.url }));
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      if (type === "profile") setUploadingProfile(false);
+      else setUploadingCover(false);
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -783,6 +820,57 @@ const Dashboard = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="space-y-2 md:col-span-1">
+                        <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                         <FileText size={12} strokeWidth={3} /> Profile Image
+                       </label>
+                       <div className="relative group overflow-hidden rounded-2xl aspect-video bg-gray-50 border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 hover:border-blue-200 transition-all cursor-pointer">
+                         {profileForm.profileImage ? (
+                            <img src={profileForm.profileImage} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="Profile" />
+                         ) : null}
+                         <input 
+                           type="file" 
+                           accept="image/*" 
+                           onChange={(e) => handleImageUpload(e, "profile")}
+                           className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                           disabled={uploadingProfile}
+                         />
+                         {uploadingProfile ? (
+                           <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full z-20"></div>
+                         ) : (
+                           <div className="flex flex-col items-center gap-1 z-20 group-hover:scale-105 transition-transform">
+                             <PlusCircle size={20} className="text-blue-500" />
+                             <span className="text-[10px] font-bold text-gray-500">UPLOAD PHOTO</span>
+                           </div>
+                         )}
+                       </div>
+                     </div>
+
+                     <div className="space-y-2 md:col-span-1">
+                        <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
+                         <FileText size={12} strokeWidth={3} /> Cover Image
+                       </label>
+                       <div className="relative group overflow-hidden rounded-2xl aspect-video bg-gray-50 border-2 border-dashed border-gray-100 flex flex-col items-center justify-center gap-2 hover:border-blue-200 transition-all cursor-pointer">
+                         {profileForm.coverImage ? (
+                            <img src={profileForm.coverImage} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="Cover" />
+                         ) : null}
+                         <input 
+                           type="file" 
+                           accept="image/*" 
+                           onChange={(e) => handleImageUpload(e, "cover")}
+                           className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                           disabled={uploadingCover}
+                         />
+                         {uploadingCover ? (
+                           <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full z-20"></div>
+                         ) : (
+                           <div className="flex flex-col items-center gap-1 z-20 group-hover:scale-105 transition-transform">
+                             <PlusCircle size={20} className="text-blue-500" />
+                             <span className="text-[10px] font-bold text-gray-500">UPLOAD COVER</span>
+                           </div>
+                         )}
+                       </div>
+                     </div>
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
                         <User size={12} strokeWidth={3} /> Full Name
@@ -840,30 +928,7 @@ const Dashboard = () => {
                         className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
                       />
                     </div>
-                    <div className="space-y-2 md:col-span-2">
-                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
-                        <FileText size={12} strokeWidth={3} /> Profile Image URL
-                      </label>
-                      <input
-                        type="url"
-                        value={profileForm.profileImage}
-                        onChange={(e) => setProfileForm({...profileForm, profileImage: e.target.value})}
-                        placeholder="https://example.com/profile.jpg"
-                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
-                        <FileText size={12} strokeWidth={3} /> Cover Image URL
-                      </label>
-                      <input
-                        type="url"
-                        value={profileForm.coverImage}
-                        onChange={(e) => setProfileForm({...profileForm, coverImage: e.target.value})}
-                        placeholder="https://example.com/cover.jpg"
-                        className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none font-semibold text-gray-900 transition-all"
-                      />
-                    </div>
+                    
                     <div className="space-y-2 md:col-span-2">
                       <label className="text-[11px] font-bold text-gray-600 uppercase tracking-widest flex items-center gap-2">
                         <PlusCircle size={12} strokeWidth={3} /> Professional Bio

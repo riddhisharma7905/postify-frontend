@@ -173,86 +173,116 @@ const PostDetails = () => {
   const totalComments = (post?.comments || []).reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10 flex justify-center">
-      <div className="max-w-3xl w-full bg-white shadow-md rounded-2xl p-8">
+    <div className="min-h-screen bg-gray-50 px-4 sm:px-6 py-10 flex justify-center">
+      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
+        
+        {/* ── Left Column: Post Content & Recommendations ── */}
+        <div className="space-y-8 min-w-0">
+          
+          {/* Post Details Card */}
+          <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
+            {/* Top bar */}
+            <div className="flex items-center justify-between mb-6">
+              <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-blue-600 transition">
+                <ArrowLeft size={18} className="mr-2" /> Back
+              </button>
+              {userId && post.author?._id === userId && (
+                <button
+                  onClick={() => navigate(`/edit/${id}`)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition text-sm"
+                >
+                  <Pencil size={15} /> Edit Post
+                </button>
+              )}
+            </div>
 
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-blue-600 transition">
-            <ArrowLeft size={18} className="mr-2" /> Back
-          </button>
-          {userId && post.author?._id === userId && (
-            <button
-              onClick={() => navigate(`/edit/${id}`)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition text-sm"
-            >
-              <Pencil size={15} /> Edit Post
-            </button>
+            <h1 className="text-3xl font-bold text-gray-800 mb-3 break-words">{post.title}</h1>
+
+            {/* Meta */}
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
+              <span className="flex items-center gap-1"><Calendar size={14} />{new Date(post.createdAt).toLocaleDateString()}</span>
+              <button
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-1 ${hasLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"} ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <Heart size={16} className={isLiking ? "animate-pulse" : ""} fill={hasLiked ? "red" : "none"} />
+                {post.likes?.length || 0} likes
+              </button>
+              <span className="flex items-center gap-1"><MessageCircle size={14} /> {totalComments} comments</span>
+              <span className="flex items-center gap-1">👁 {post.views || 0} views</span>
+            </div>
+
+            {/* Cover image */}
+            {post.image && (
+              <div className="mb-6 rounded-xl overflow-hidden h-64 sm:h-80">
+                <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Content */}
+            <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
+
+            {/* Tags */}
+            {post.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {post.tags.map((tag, i) => (
+                  <span key={i} className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium break-all">#{tag}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Author */}
+            {post.author && (
+              <div className="mt-8 border-t pt-4 text-gray-600 text-sm">
+                <p>
+                  By{" "}
+                  <button
+                    onClick={() => navigateToUser(post.author._id)}
+                    className="font-bold text-blue-600 hover:underline"
+                  >
+                    {post.author.name || "Author"}
+                  </button>
+                  {post.category && (
+                    <span className="ml-3 text-[11px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-lg">{post.category}</span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Recommendations Card */}
+          {recommended.length > 0 && (
+            <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Recommended Posts ✨</h2>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {recommended.map((rec) => (
+                  <div
+                    key={rec._id}
+                    onClick={() => { navigate(`/post/${rec._id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    className="cursor-pointer bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border transition flex flex-col justify-between"
+                  >
+                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{rec.title}</h3>
+                    <div className="flex flex-wrap gap-1 text-xs text-blue-600">
+                      {rec.tags?.slice(0, 3).map((t, i) => (
+                        <span key={i} className="truncate max-w-full">#{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-3">{post.title}</h1>
-
-        {/* Meta */}
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
-          <span className="flex items-center gap-1"><Calendar size={14} />{new Date(post.createdAt).toLocaleDateString()}</span>
-          <button
-            onClick={handleLike}
-            disabled={isLiking}
-            className={`flex items-center gap-1 ${hasLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"} ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <Heart size={16} className={isLiking ? "animate-pulse" : ""} fill={hasLiked ? "red" : "none"} />
-            {post.likes?.length || 0} likes
-          </button>
-          <span className="flex items-center gap-1"><MessageCircle size={14} /> {totalComments} comments</span>
-          <span className="flex items-center gap-1">👁 {post.views || 0} views</span>
-        </div>
-
-        {/* Cover image */}
-        {post.image && (
-          <div className="mb-6 rounded-xl overflow-hidden h-64">
-            <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6">{post.content}</div>
-
-        {/* Tags */}
-        {post.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4">
-            {post.tags.map((tag, i) => (
-              <span key={i} className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium">#{tag}</span>
-            ))}
-          </div>
-        )}
-
-        {/* Author */}
-        {post.author && (
-          <div className="mt-8 border-t pt-4 text-gray-600 text-sm">
-            <p>
-              By{" "}
-              <button
-                onClick={() => navigateToUser(post.author._id)}
-                className="font-bold text-blue-600 hover:underline"
-              >
-                {post.author.name || "Author"}
-              </button>
-              {post.category && (
-                <span className="ml-3 text-[11px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-lg">{post.category}</span>
-              )}
-            </p>
-          </div>
-        )}
-
-        {/* ── Comments Section ── */}
-        <div className="mt-10 border-t pt-6">
+        {/* ── Right Column: Comments (Sticky) ── */}
+        <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8 lg:sticky lg:top-6 max-h-[calc(100vh-3rem)] overflow-y-auto min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Comments <span className="text-gray-400 text-sm font-normal">({totalComments})</span>
           </h2>
 
           {/* New comment form */}
-          <form onSubmit={handleAddComment} className="flex items-center gap-3 mb-8">
+          <form onSubmit={handleAddComment} className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
               {userId ? "Y" : "?"}
             </div>
@@ -261,14 +291,14 @@ const PostDetails = () => {
               placeholder="Write a comment..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none text-sm"
+              className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none min-w-0"
             />
             <button
               type="submit"
               disabled={!commentText.trim()}
-              className="bg-blue-600 text-white px-4 py-2.5 rounded-xl flex items-center gap-1.5 hover:bg-blue-700 transition disabled:opacity-40 text-sm font-bold"
+              className="bg-blue-600 text-white p-2.5 rounded-xl flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-40 shrink-0"
             >
-              <Send size={15} /> Post
+              <Send size={15} />
             </button>
           </form>
 
@@ -280,45 +310,45 @@ const PostDetails = () => {
                 return (
                   <div key={comment._id} className="group">
                     {/* Comment bubble */}
-                    <div className={`rounded-2xl p-4 text-sm border ${
+                    <div className={`rounded-xl p-3 text-sm border ${
                       comment.isToxic ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-100 text-gray-700"
                     }`}>
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 flex-1">
+                        <div className="flex items-start gap-2.5 flex-1">
                           {/* Commenter avatar */}
                           <div
                             onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
-                            className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
+                            className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
                             title="View profile"
                           >
                             {comment.user?.name?.charAt(0)?.toUpperCase() || "U"}
                           </div>
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <button
                               onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
-                              className="font-bold text-gray-900 hover:text-blue-600 transition-colors text-[13px]"
+                              className="font-bold text-gray-900 hover:text-blue-600 transition-colors text-[13px] truncate max-w-full block text-left"
                             >
                               {comment.user?.name || "User"}
                             </button>
-                            <p className="mt-1 text-[14px] leading-relaxed">{comment.text}</p>
+                            <p className="mt-0.5 text-[13px] leading-relaxed break-words">{comment.text}</p>
                             {comment.isToxic && (
-                              <p className="text-xs text-red-500 mt-1 font-semibold">⚠️ Flagged as toxic</p>
+                              <p className="text-[11px] text-red-500 mt-1 font-semibold">⚠️ Flagged as toxic</p>
                             )}
 
                             {/* Action row */}
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-[11px] text-gray-400">
+                            <div className="flex items-center gap-3 mt-1.5 w-full flex-wrap">
+                              <span className="text-[10px] text-gray-400">
                                 {new Date(comment.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                               </span>
                               {token && (
-                                  <button
-                                    onClick={() => handleToggleReply(comment._id, comment.user?.name)}
-                                    className="text-[12px] font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
-                                  >
-                                    <CornerDownRight size={12} />
-                                    {rs.isOpen ? "Cancel" : "Reply"}
+                                <button
+                                  onClick={() => handleToggleReply(comment._id, comment.user?.name)}
+                                  className="text-[11px] font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
+                                >
+                                  <CornerDownRight size={10} />
+                                  {rs.isOpen ? "Cancel" : "Reply"}
                                   {comment.replies?.length > 0 && (
-                                    <span className="ml-1 bg-blue-100 text-blue-600 text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                                    <span className="ml-1 bg-blue-100 text-blue-600 text-[9px] font-black px-1.5 py-0.5 rounded-full">
                                       {comment.replies.length}
                                     </span>
                                   )}
@@ -332,9 +362,9 @@ const PostDetails = () => {
                         {comment.user?._id === userId && (
                           <button
                             onClick={() => handleDeleteComment(comment._id)}
-                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1"
                           >
-                            <Trash2 size={14} />
+                            <Trash2 size={12} />
                           </button>
                         )}
                       </div>
@@ -342,47 +372,47 @@ const PostDetails = () => {
 
                     {/* ── Replies ── */}
                     {(comment.replies?.length > 0 || rs.isOpen) && (
-                      <div className="ml-11 mt-2 space-y-2">
+                      <div className="ml-10 mt-1.5 space-y-1.5">
                         {/* Existing replies */}
                         {comment.replies?.slice(0, rs.showAll ? comment.replies.length : 1).map((reply) => (
                           <div
                             key={reply._id}
-                            className={`group/reply flex items-start gap-2.5 p-3 rounded-xl border text-sm ${
-                              reply.isToxic ? "bg-red-50 border-red-100 text-red-700" : "bg-blue-50/40 border-blue-50 text-gray-700"
+                            className={`group/reply flex items-start gap-2 p-2.5 rounded-xl border text-sm ${
+                              reply.isToxic ? "bg-red-50 border-red-100 text-red-700" : "bg-blue-50/40 border-transparent text-gray-700"
                             }`}
                           >
                             <div
                               onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                              className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[10px] flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
+                              className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
                             >
                               {reply.user?.name?.charAt(0)?.toUpperCase() || "U"}
                             </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2">
                                 <button
                                   onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                                  className="font-bold text-gray-800 hover:text-blue-600 text-[12px] transition-colors"
+                                  className="font-bold text-gray-800 hover:text-blue-600 text-[11px] transition-colors truncate block text-left flex-1"
                                 >
                                   {reply.user?.name || "User"}
                                 </button>
                                 {reply.user?._id === userId && (
                                   <button
                                     onClick={() => handleDeleteReply(comment._id, reply._id)}
-                                    className="text-gray-300 hover:text-red-500 transition opacity-0 group-hover/reply:opacity-100 flex-shrink-0"
+                                    className="text-gray-300 hover:text-red-500 transition opacity-0 group-hover/reply:opacity-100 flex-shrink-0 mt-0.5"
                                   >
-                                    <Trash2 size={12} />
+                                    <Trash2 size={10} />
                                   </button>
                                 )}
                               </div>
-                              <p className="text-[13px] mt-0.5">{reply.text}</p>
-                              <div className="flex items-center gap-3 mt-1">
-                                <p className="text-[10px] text-gray-400">
+                              <p className="text-[12px] mt-0.5 break-words">{reply.text}</p>
+                              <div className="flex items-center gap-2 mt-1 w-full flex-wrap">
+                                <p className="text-[9px] text-gray-400">
                                   {new Date(reply.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                                 </p>
                                 {token && (
                                   <button
                                     onClick={() => handleToggleReply(comment._id, reply.user?.name)}
-                                    className="text-[10px] font-bold text-blue-500/60 hover:text-blue-600 transition-colors"
+                                    className="text-[9px] font-bold text-blue-500/60 hover:text-blue-600 transition-colors"
                                   >
                                     Reply
                                   </button>
@@ -396,10 +426,10 @@ const PostDetails = () => {
                         {comment.replies?.length > 1 && (
                           <button
                             onClick={() => setReply(comment._id, { showAll: !rs.showAll })}
-                            className="text-[11px] font-black text-blue-600/60 hover:text-blue-600 transition-colors ml-9 mt-1 flex items-center gap-1.5"
+                            className="text-[10px] font-black text-blue-600/60 hover:text-blue-600 transition-colors ml-7 mt-0.5 flex items-center gap-1"
                           >
-                            <span className="w-4 h-[1px] bg-blue-200"></span>
-                            {rs.showAll ? "Hide replies" : `View ${comment.replies.length - 1} more replies...`}
+                            <span className="w-3 h-[1px] bg-blue-200"></span>
+                            {rs.showAll ? "Hide replies" : `View ${comment.replies.length - 1} more`}
                           </button>
                         )}
 
@@ -407,22 +437,22 @@ const PostDetails = () => {
                         {rs.isOpen && (
                           <form
                             onSubmit={(e) => handleAddReply(e, comment._id)}
-                            className="flex items-center gap-2 mt-2"
+                            className="flex items-center gap-1.5 mt-1.5 ml-7"
                           >
                             <input
                               type="text"
                               autoFocus
-                              placeholder={`Reply to ${comment.user?.name || "this comment"}...`}
+                              placeholder={`Reply`}
                               value={rs.replyText || ""}
                               onChange={(e) => setReply(comment._id, { replyText: e.target.value })}
-                              className="flex-1 border border-blue-100 bg-white rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
+                              className="flex-1 border border-blue-100 bg-white rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none min-w-0"
                             />
                             <button
                               type="submit"
                               disabled={!rs.replyText?.trim() || rs.isSubmitting}
-                              className="bg-blue-600 text-white px-3 py-2 rounded-xl hover:bg-blue-700 disabled:opacity-40 text-xs font-bold flex items-center gap-1 transition"
+                              className="bg-blue-600 text-white px-2 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40 text-[10px] font-bold flex items-center transition shrink-0"
                             >
-                              <Send size={12} /> {rs.isSubmitting ? "..." : "Reply"}
+                              <Send size={10} />
                             </button>
                           </form>
                         )}
@@ -432,31 +462,10 @@ const PostDetails = () => {
                 );
               })
             ) : (
-              <p className="text-gray-500 text-sm">No comments yet. Be the first to comment!</p>
+              <p className="text-gray-500 text-[13px] text-center mt-8">No comments yet. Be the first to comment!</p>
             )}
           </div>
         </div>
-
-        {/* Recommendations */}
-        {recommended.length > 0 && (
-          <div className="mt-10 border-t pt-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Recommended Posts ✨</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {recommended.map((rec) => (
-                <div
-                  key={rec._id}
-                  onClick={() => { navigate(`/post/${rec._id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="cursor-pointer bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border transition"
-                >
-                  <h3 className="font-semibold text-gray-800 mb-1">{rec.title}</h3>
-                  <div className="flex flex-wrap gap-1 text-xs text-blue-600">
-                    {rec.tags?.slice(0, 3).map((t, i) => <span key={i}>#{t}</span>)}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

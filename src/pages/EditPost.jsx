@@ -15,6 +15,7 @@ const EditPost = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
 
   const token = localStorage.getItem("authToken");
@@ -65,8 +66,36 @@ const EditPost = () => {
     } catch (err) {
       console.error("Update error:", err);
       setError(err.message);
-    } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL || ""}/api/posts/upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      setImageUrl(data.url);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -169,29 +198,50 @@ const EditPost = () => {
             />
           </div>
 
-          {/* Cover Image URL */}
+          {/* Cover Image Upload */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-              <Image size={15} className="text-blue-500" /> Cover Image URL
+            <label className="block text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+              <Image size={15} className="text-blue-500" /> Post Cover Image
               <span className="text-gray-400 font-normal">(optional)</span>
             </label>
-            <input
-              type="url"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://example.com/your-image.jpg"
-              className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-100 outline-none text-gray-900 font-medium transition-all placeholder:text-gray-300"
-            />
-            {imageUrl && (
-              <div className="mt-3 rounded-2xl overflow-hidden h-48 bg-gray-100">
-                <img
-                  src={imageUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  onError={() => setImageUrl("")}
-                />
-              </div>
-            )}
+            
+            <div className={`relative group overflow-hidden rounded-3xl aspect-[21/9] bg-gray-50 border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 ${imageUrl ? 'border-transparent' : 'border-gray-200 hover:border-blue-300'}`}>
+              {imageUrl ? (
+                <>
+                  <img src={imageUrl} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    <label className="px-5 py-2.5 bg-white text-gray-900 rounded-xl font-bold text-sm cursor-pointer hover:bg-gray-100 active:scale-95 transition-all">
+                      Change Image
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                    </label>
+                    <button 
+                      type="button"
+                      onClick={() => setImageUrl("")}
+                      className="px-5 py-2.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 active:scale-95 transition-all"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <label className="flex flex-col items-center gap-3 cursor-pointer p-10 w-full">
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                  {isUploading ? (
+                    <Loader2 size={32} className="animate-spin text-blue-500" />
+                  ) : (
+                    <>
+                      <div className="h-14 w-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                        <Image size={28} />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-900 font-bold">Click to upload cover photo</p>
+                        <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">PNG, JPG, or WebP up to 5MB</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+              )}
+            </div>
           </div>
         </div>
 
