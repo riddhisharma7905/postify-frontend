@@ -11,8 +11,6 @@ import EditPost from "./pages/EditPost";
 import PostDetails from "./pages/PostDetails";
 import AuthorProfile from "./pages/AuthorProfile";
 import Legal from "./pages/Legal";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 
@@ -59,8 +57,6 @@ function App() {
             )}
 
             <Route path="/legal" element={<Legal />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
 
 
           </Routes>

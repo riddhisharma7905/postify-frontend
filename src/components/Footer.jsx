@@ -33,13 +33,13 @@ const Footer = () => {
             About
           </Link>
           <Link
-            to="/privacy"
+            to="/legal#privacy"
             className="hover:text-blue-600 transition-colors duration-200"
           >
             Privacy Policy
           </Link>
           <Link
-            to="/terms"
+            to="/legal#terms"
             className="hover:text-blue-600 transition-colors duration-200"
           >
             Terms of Service
