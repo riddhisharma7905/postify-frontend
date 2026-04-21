@@ -140,6 +140,30 @@ const Dashboard = () => {
     }
   };
 
+  const handleDeleteImage = async (type) => {
+    if (!window.confirm(`Are you sure you want to delete your ${type} image?`)) return;
+    const token = localStorage.getItem("authToken");
+
+    try {
+      if (type === "profile") setUploadingProfile(true);
+      else setUploadingCover(true);
+
+      const res = await request("/api/user/image", "DELETE", { type }, {
+        Authorization: `Bearer ${token}`
+      });
+
+      setProfileForm((prev) => ({ ...prev, [type === "profile" ? "profileImage" : "coverImage"]: "" }));
+      setUserData(res);
+      // No alert needed for a smoother experience, but we can add one if desired.
+    } catch (err) {
+      console.error("Delete image error:", err);
+      alert("Failed to delete image: " + err.message);
+    } finally {
+      if (type === "profile") setUploadingProfile(false);
+      else setUploadingCover(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
@@ -836,6 +860,16 @@ const Dashboard = () => {
                          {profileForm.profileImage ? (
                             <img src={profileForm.profileImage} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="Profile" />
                          ) : null}
+                         {profileForm.profileImage && !uploadingProfile && (
+                           <button
+                             type="button"
+                             onClick={(e) => { e.stopPropagation(); handleDeleteImage("profile"); }}
+                             className="absolute top-3 right-3 z-30 p-2 bg-white/90 hover:bg-red-500 hover:text-white text-red-500 rounded-xl shadow-lg transition-all transform hover:scale-110 active:scale-95"
+                             title="Delete Profile Photo"
+                           >
+                             <Trash2 size={16} />
+                           </button>
+                         )}
                          <input 
                            type="file" 
                            accept="image/*" 
@@ -862,6 +896,16 @@ const Dashboard = () => {
                          {profileForm.coverImage ? (
                             <img src={profileForm.coverImage} className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity" alt="Cover" />
                          ) : null}
+                         {profileForm.coverImage && !uploadingCover && (
+                           <button
+                             type="button"
+                             onClick={(e) => { e.stopPropagation(); handleDeleteImage("cover"); }}
+                             className="absolute top-3 right-3 z-30 p-2 bg-white/90 hover:bg-red-500 hover:text-white text-red-500 rounded-xl shadow-lg transition-all transform hover:scale-110 active:scale-95"
+                             title="Delete Cover Photo"
+                           >
+                             <Trash2 size={16} />
+                           </button>
+                         )}
                          <input 
                            type="file" 
                            accept="image/*" 
