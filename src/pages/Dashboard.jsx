@@ -287,9 +287,17 @@ const Dashboard = () => {
         {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center text-xl font-medium text-gray-800 shrink-0">
-              {userData.name ? userData.name.charAt(0).toUpperCase() : "U"}
-            </div>
+            {userData.profileImage ? (
+              <img 
+                src={userData.profileImage} 
+                alt={userData.name} 
+                className="h-14 w-14 rounded-full object-cover shrink-0 border border-gray-100" 
+              />
+            ) : (
+              <div className="h-14 w-14 rounded-full bg-gray-100 flex items-center justify-center text-xl font-medium text-gray-800 shrink-0">
+                {userData.name ? userData.name.charAt(0).toUpperCase() : "U"}
+              </div>
+            )}
             <div>
               <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                 Welcome back, {userData.name || "Sarah"}!

@@ -234,19 +234,35 @@ const PostDetails = () => {
 
             {/* Author */}
             {post.author && (
-              <div className="mt-8 border-t pt-4 text-gray-600 text-sm">
-                <p>
-                  By{" "}
-                  <button
+              <div className="mt-8 border-t pt-6 flex items-center gap-4">
+                {post.author.profileImage ? (
+                  <img 
+                    src={post.author.profileImage} 
+                    alt={post.author.name} 
+                    className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0 cursor-pointer"
                     onClick={() => navigateToUser(post.author._id)}
-                    className="font-bold text-blue-600 hover:underline"
+                  />
+                ) : (
+                  <div 
+                    className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg border-2 border-white shadow-sm shrink-0 cursor-pointer"
+                    onClick={() => navigateToUser(post.author._id)}
                   >
-                    {post.author.name || "Author"}
-                  </button>
+                    {post.author.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-gray-900 font-bold">
+                    <button
+                      onClick={() => navigateToUser(post.author._id)}
+                      className="hover:text-blue-600 transition"
+                    >
+                      {post.author.name || "Author"}
+                    </button>
+                  </p>
                   {post.category && (
-                    <span className="ml-3 text-[11px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-lg">{post.category}</span>
+                    <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{post.category}</span>
                   )}
-                </p>
+                </div>
               </div>
             )}
           </div>
@@ -316,14 +332,23 @@ const PostDetails = () => {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 flex-1">
                           {/* Commenter avatar */}
-                          <div
-                            onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
-                            className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
-                            title="View profile"
-                          >
-                            {comment.user?.name?.charAt(0)?.toUpperCase() || "U"}
-                          </div>
-                          <div className="flex-1 min-w-0">
+                          {comment.user?.profileImage ? (
+                            <img 
+                              src={comment.user.profileImage} 
+                              alt={comment.user.name} 
+                              className="w-7 h-7 rounded-full object-cover flex-shrink-0 cursor-pointer"
+                              title="View profile"
+                              onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
+                            />
+                          ) : (
+                            <div
+                              onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
+                              className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
+                              title="View profile"
+                            >
+                              {comment.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                            </div>
+                          )}                          <div className="flex-1 min-w-0">
                             <button
                               onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
                               className="font-bold text-gray-900 hover:text-blue-600 transition-colors text-[13px] truncate max-w-full block text-left"
@@ -381,13 +406,21 @@ const PostDetails = () => {
                               reply.isToxic ? "bg-red-50 border-red-100 text-red-700" : "bg-blue-50/40 border-transparent text-gray-700"
                             }`}
                           >
-                            <div
-                              onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                              className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
-                            >
-                              {reply.user?.name?.charAt(0)?.toUpperCase() || "U"}
-                            </div>
-                            <div className="flex-1 min-w-0">
+                            {reply.user?.profileImage ? (
+                              <img 
+                                src={reply.user.profileImage} 
+                                alt={reply.user.name} 
+                                className="w-5 h-5 rounded-full object-cover flex-shrink-0 cursor-pointer"
+                                onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
+                              />
+                            ) : (
+                              <div
+                                onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
+                                className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
+                              >
+                                {reply.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                              </div>
+                            )}                            <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <button
                                   onClick={() => reply.user?._id && navigateToUser(reply.user._id)}

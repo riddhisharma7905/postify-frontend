@@ -76,10 +76,13 @@ const HeroCard = ({ post, onClick }) => (
       </p>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm">
-            {post.author?.name?.charAt(0) || "U"}
-          </div>
-          <div>
+          {post.author?.profileImage ? (
+            <img src={post.author.profileImage} alt={post.author.name} className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0" />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm border-2 border-white shadow-sm">
+              {post.author?.name?.charAt(0) || "U"}
+            </div>
+          )}          <div>
             <p className="text-sm font-bold text-gray-900">{post.author?.name || "Creator"}</p>
             <div className="flex gap-3 text-[11px] font-bold text-gray-400 mt-0.5">
               <span className="flex items-center gap-1"><Eye size={12} /> {post.views || 0}</span>
@@ -144,10 +147,13 @@ const PostCard = ({ post, onClick }) => (
 
       <div className="flex items-center justify-between pt-5 border-t border-gray-50">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[12px]">
-            {post.author?.name?.charAt(0) || "U"}
-          </div>
-          <span className="text-[12px] font-bold text-gray-700">{post.author?.name || "Creator"}</span>
+          {post.author?.profileImage ? (
+            <img src={post.author.profileImage} alt={post.author.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-[12px]">
+              {post.author?.name?.charAt(0) || "U"}
+            </div>
+          )}          <span className="text-[12px] font-bold text-gray-700">{post.author?.name || "Creator"}</span>
         </div>
         <div className="flex gap-3 text-[12px] font-bold text-gray-300">
           <span className="flex items-center gap-1"><Eye size={13} /> {post.views || 0}</span>

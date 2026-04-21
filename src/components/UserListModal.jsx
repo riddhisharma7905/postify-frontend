@@ -81,9 +81,13 @@ const UserListModal = ({ title, users = [], onClose }) => {
                   onClick={() => handleUserClick(user._id)}
                   className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-blue-50 transition-colors group text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 group-hover:bg-blue-200 transition-colors">
-                    {user.name?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 group-hover:bg-blue-200 transition-colors">
+                      {user.name?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors truncate">
                       {user.name}
