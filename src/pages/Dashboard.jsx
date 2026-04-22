@@ -246,6 +246,24 @@ const Dashboard = () => {
     });
   }, [publishedPosts]);
 
+  const recentPerformanceData = useMemo(() => {
+    if (!publishedPosts.length) return [];
+    return [...publishedPosts]
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      .slice(-7)
+      .map(post => ({
+        name: post.title.substring(0, 10) + (post.title.length > 10 ? '...' : ''),
+        views: post.views || 0,
+        likes: post.likes?.length || 0,
+      }));
+  }, [publishedPosts]);
+
+  const topPosts = useMemo(() => {
+    return [...publishedPosts]
+      .sort((a, b) => ((b.views || 0) + (b.likes?.length || 0) * 2) - ((a.views || 0) + (a.likes?.length || 0) * 2))
+      .slice(0, 3);
+  }, [publishedPosts]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
@@ -276,8 +294,13 @@ const Dashboard = () => {
   const totalPosts = publishedPosts.length;
   const totalLikes = publishedPosts.reduce((acc, p) => acc + (p.likes?.length || 0), 0);
   const totalViews = publishedPosts.reduce((acc, p) => acc + (p.views || 0), 0);
+  const totalComments = publishedPosts.reduce((acc, p) => acc + (p.commentCount || 0), 0);
   const followersCount = Array.isArray(userData.followers) ? userData.followers.length : 0;
   const followingCount = Array.isArray(userData.following) ? userData.following.length : 0;
+
+  const engagementRate = totalViews > 0 ? (((totalLikes + totalComments) / totalViews) * 100).toFixed(1) : 0;
+  const avgViews = totalPosts > 0 ? (totalViews / totalPosts).toFixed(0) : 0;
+  const avgLikes = totalPosts > 0 ? (totalLikes / totalPosts).toFixed(1) : 0;
 
   const stats = [
     { title: "Total Posts", value: totalPosts, icon: FileText, color: "text-blue-500" },
@@ -692,107 +715,100 @@ const Dashboard = () => {
         {/* Analytics Tab Content */}
         {activeTab === "analytics" && (
           <div className="animate-in fade-in duration-500 space-y-8 pb-10">
+            {/* Top Metrics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">Engagement Rate</p>
+                <p className="text-3xl font-black text-gray-900">{engagementRate}%</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">Avg Views / Post</p>
+                <p className="text-3xl font-black text-gray-900">{avgViews}</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">Avg Likes / Post</p>
+                <p className="text-3xl font-black text-gray-900">{avgLikes}</p>
+              </div>
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
+                <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Comments</p>
+                <p className="text-3xl font-black text-gray-900">{totalComments}</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
-                 <div className="flex justify-between items-center mb-8">
-                   <div>
-                     <h2 className="text-xl font-bold text-gray-900 tracking-tight">Total Reach Analysis</h2>
-                     <p className="text-sm text-gray-500 mt-1">Cumulative audience growth over time</p>
+               <div className="lg:col-span-2 space-y-6">
+                 {/* Area Chart - Reach */}
+                 <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                   <div className="flex justify-between items-center mb-6">
+                     <div>
+                       <h2 className="text-xl font-bold text-gray-900 tracking-tight">Total Reach Analysis</h2>
+                       <p className="text-sm text-gray-500 mt-1">Cumulative audience growth over time</p>
+                     </div>
+                   </div>
+                   <div className="h-[300px] w-full">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <AreaChart data={reachData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                         <defs>
+                           <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                             <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15}/>
+                             <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                           </linearGradient>
+                         </defs>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                         <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
+                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
+                         <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', padding: '12px'}} labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}/>
+                         <Area type="monotone" dataKey="reach" stroke="#3B82F6" strokeWidth={3} fillOpacity={1} fill="url(#colorReach)" name="Total Views"/>
+                       </AreaChart>
+                     </ResponsiveContainer>
                    </div>
                  </div>
-                 <div className="h-[350px] w-full">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <AreaChart data={reachData}>
-                       <defs>
-                         <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                           <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15}/>
-                           <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                         </linearGradient>
-                       </defs>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                       <XAxis 
-                         dataKey="date" 
-                         axisLine={false} 
-                         tickLine={false} 
-                         tick={{fill: '#9CA3AF', fontSize: 12}} 
-                         dy={10} 
-                       />
-                       <YAxis 
-                         axisLine={false} 
-                         tickLine={false} 
-                         tick={{fill: '#9CA3AF', fontSize: 12}} 
-                       />
-                       <Tooltip 
-                         contentStyle={{
-                           borderRadius: '16px', 
-                           border: 'none', 
-                           boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                           padding: '12px'
-                         }}
-                         labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-                       />
-                       <Area 
-                         type="monotone" 
-                         dataKey="reach" 
-                         stroke="#3B82F6" 
-                         strokeWidth={3}
-                         fillOpacity={1} 
-                         fill="url(#colorReach)" 
-                         name="Total Views"
-                       />
-                     </AreaChart>
-                   </ResponsiveContainer>
+
+                 {/* Bar Chart - Recent Performance */}
+                 <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
+                   <div className="flex justify-between items-center mb-6">
+                     <div>
+                       <h2 className="text-xl font-bold text-gray-900 tracking-tight">Recent Post Performance</h2>
+                       <p className="text-sm text-gray-500 mt-1">Comparing Views vs Likes on your last 7 posts</p>
+                     </div>
+                   </div>
+                   <div className="h-[300px] w-full">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <BarChart data={recentPerformanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 11}} dy={10} />
+                         <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 11}} />
+                         <Tooltip cursor={{fill: '#F9FAFB'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', padding: '10px'}}/>
+                         <Bar dataKey="views" fill="#3B82F6" radius={[4, 4, 0, 0]} name="Views" barSize={20} />
+                         <Bar dataKey="likes" fill="#EC4899" radius={[4, 4, 0, 0]} name="Likes" barSize={20} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </div>
                  </div>
                </div>
 
-               <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col">
-                 <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-2">Metrics Distribution</h2>
-                 <p className="text-sm text-gray-500 mb-8">Overview of your engagement stats</p>
-                 <div className="flex-1 flex items-center justify-center">
-                   <div className="h-64 w-64 relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              { name: 'Views', value: totalViews, color: '#3B82F6' },
-                              { name: 'Likes', value: totalLikes, color: '#EC4899' },
-                              { name: 'Followers', value: followersCount, color: '#A855F7' }
-                            ]}
-                            innerRadius={70}
-                            outerRadius={90}
-                            paddingAngle={8}
-                            dataKey="value"
-                          >
-                            {[
-                              { color: '#3B82F6' },
-                              { color: '#EC4899' },
-                              { color: '#A855F7' }
-                            ].map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Growth</span>
-                         <span className="text-2xl font-black text-gray-900">Total</span>
-                      </div>
-                   </div>
-                 </div>
-                 <div className="mt-8 space-y-4">
-                   {[
-                     { label: 'Views', value: totalViews, color: 'bg-blue-500' },
-                     { label: 'Likes', value: totalLikes, color: 'bg-pink-500' },
-                     { label: 'Followers', value: followersCount, color: 'bg-purple-500' }
-                   ].map(item => (
-                     <div key={item.label} className="flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                         <div className={`h-3 w-3 rounded-full ${item.color}`}></div>
-                         <span className="text-sm font-semibold text-gray-600">{item.label}</span>
+               {/* Top Posts Column */}
+               <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col h-full">
+                 <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-2">Top Performing Posts</h2>
+                 <p className="text-sm text-gray-500 mb-6">Your most engaging content</p>
+                 
+                 <div className="flex-1 space-y-4">
+                   {topPosts.length > 0 ? topPosts.map((post, i) => (
+                     <div key={post._id} onClick={() => navigate(`/post/${post._id}`)} className="p-4 bg-gray-50/80 rounded-2xl cursor-pointer hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors flex gap-4 items-center group">
+                       <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-lg font-black text-gray-400 group-hover:text-blue-500 border border-gray-100">
+                         #{i + 1}
                        </div>
-                       <span className="text-sm font-bold text-gray-900">{item.value}</span>
+                       <div className="flex-1 min-w-0">
+                         <h3 className="font-bold text-gray-900 text-[14px] truncate">{post.title}</h3>
+                         <div className="flex items-center gap-3 mt-1.5 text-[11px] font-bold text-gray-500">
+                           <span className="flex items-center gap-1"><Eye size={12} className="text-blue-500"/> {post.views || 0}</span>
+                           <span className="flex items-center gap-1"><Heart size={12} className="text-pink-500"/> {post.likes?.length || 0}</span>
+                         </div>
+                       </div>
                      </div>
-                   ))}
+                   )) : (
+                     <div className="text-center py-10 text-gray-500 text-sm">No posts to display.</div>
+                   )}
                  </div>
                </div>
             </div>
