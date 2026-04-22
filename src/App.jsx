@@ -46,19 +46,24 @@ function App() {
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/post/:id" element={<PostDetails />} />
             <Route path="/author/:id" element={<AuthorProfile />} />
-            {isLoggedIn ? (
-              <>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/createpost" element={<CreatePost />} />
-                <Route path="/edit/:id" element={<EditPost />} />
-              </>
-            ) : (
-              <Route path="*" element={<Navigate to="/login" replace />} />
-            )}
-
             <Route path="/legal" element={<Legal />} />
 
+            {/* Protected Routes */}
+            <Route 
+              path="/dashboard" 
+              element={isLoggedIn ? <Dashboard /> : <Navigate to="/home" replace />} 
+            />
+            <Route 
+              path="/createpost" 
+              element={isLoggedIn ? <CreatePost /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/edit/:id" 
+              element={isLoggedIn ? <EditPost /> : <Navigate to="/login" replace />} 
+            />
 
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>
 

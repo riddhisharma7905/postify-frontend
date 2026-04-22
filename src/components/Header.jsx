@@ -7,7 +7,7 @@ function Header({ isLoggedIn, onLogout }) {
 
   const handleLogout = () => {
     onLogout();
-    navigate("/home", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const handleProtectedClick = (e, targetPath) => {
