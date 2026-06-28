@@ -144,7 +144,6 @@ const PostDetails = () => {
       setReply(commentId, { isSubmitting: false });
     }
   };
-
   const handleDeleteReply = async (commentId, replyId) => {
     if (!window.confirm("Delete this reply?")) return;
     try {
@@ -229,12 +228,18 @@ const PostDetails = () => {
               </div>
             )}
 
-            <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
+            <div className="max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
 
             {post.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {post.tags.map((tag, i) => (
-                  <span key={i} className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium break-all">#{tag}</span>
+                  <button 
+                    key={i} 
+                    onClick={() => navigate(`/explore?query=${encodeURIComponent(tag)}`)}
+                    className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium break-all hover:bg-blue-200 transition-colors cursor-pointer"
+                  >
+                    #{tag}
+                  </button>
                 ))}
               </div>
             )}

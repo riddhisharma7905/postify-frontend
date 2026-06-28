@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { request } from "../api";
 import { Search, TrendingUp, Eye, Heart, X, Loader2, Flame, Edit3, ArrowRight, MessageCircle } from "lucide-react";
 
@@ -168,6 +168,15 @@ const Explore = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const query = params.get("query");
+    if (query) {
+      setSearchQuery(query);
+    }
+  }, [location.search]);
 
   const debouncedSearch = useDebounce(searchQuery, 600);
 
