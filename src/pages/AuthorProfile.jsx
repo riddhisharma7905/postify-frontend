@@ -21,7 +21,6 @@ import UserListModal from "../components/UserListModal";
 const FALLBACK_COVER = "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=1200&auto=format&fit=crop&q=80";
 const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80";
 
-// ─── Grid Card (Instagram-ish but refined) ──────────────────────────────────
 const GridCard = ({ post, isPinned, isOwner, onPin, onClick }) => (
   <div className="relative group aspect-square cursor-pointer overflow-hidden rounded-xl bg-gray-50 border border-gray-100" onClick={onClick}>
     <img
@@ -41,7 +40,6 @@ const GridCard = ({ post, isPinned, isOwner, onPin, onClick }) => (
   </div>
 );
 
-// ─── Suggested Creator Item ──────────────────────────────────────────────────
 const SuggestedCreator = ({ user }) => (
   <div className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer group">
     <Link to={`/author/${user._id}`} className="shrink-0">
@@ -146,19 +144,14 @@ const AuthorProfile = () => {
       <div className="max-w-6xl mx-auto px-4 pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* ─── Main Content (Profile Card + Tabs) ────────────────────────── */}
           <div className="lg:col-span-8 space-y-6">
             
-            {/* Profile Header Card */}
             <div className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm">
-              {/* Cover Image */}
               <div className="h-48 sm:h-64 relative bg-gray-200">
                 <img src={author.coverImage || FALLBACK_COVER} className="w-full h-full object-cover" alt="Cover" />
               </div>
 
-              {/* Profile Details Area */}
               <div className="px-6 pb-6 relative">
-                {/* Avatar */}
                 <div className="absolute -top-16 left-6">
                   {author.profileImage ? (
                     <img src={author.profileImage} className="w-32 h-32 rounded-full border-4 border-white object-cover bg-white shadow-md" alt={author.name} />
@@ -169,7 +162,6 @@ const AuthorProfile = () => {
                   )}
                 </div>
 
-                {/* Actions (Right) */}
                 <div className="pt-4 flex justify-end gap-2">
                   {!isOwner ? (
                     <>
@@ -193,7 +185,6 @@ const AuthorProfile = () => {
                   )}
                 </div>
 
-                {/* Text Details */}
                 <div className="mt-8">
                   <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     {author.name}
@@ -201,12 +192,10 @@ const AuthorProfile = () => {
                   </h1>
                   <p className="text-gray-700 text-base mt-1 font-medium">{author.bio || "Crafting digital experiences @ Postify"}</p>
                   
-                  {/* Meta Info */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-gray-500 font-medium">
                     <span className="flex items-center gap-1.5"><Calendar size={14} /> Joined {new Date(author.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</span>
                   </div>
 
-                  {/* Connections */}
                   <div className="mt-4 flex items-center gap-2 text-sm">
                     <button onClick={() => setModal("followers")} className="text-blue-600 font-bold hover:underline">{author.followers?.length || 0} followers</button>
                     <span className="text-gray-300">•</span>
@@ -216,7 +205,6 @@ const AuthorProfile = () => {
               </div>
             </div>
 
-            {/* Tabs & Content */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                <div className="flex border-b border-gray-100">
                 <button 
@@ -247,7 +235,7 @@ const AuthorProfile = () => {
                         isPinned={activeTab === "posts" && p._id === author.pinnedPostId} 
                         isOwner={isOwner} 
                         onPin={handlePin}
-                        onClick={() => navigate(`/post/${p._id}`)}
+                        onClick={() => navigate(`/post/${p.slug || p._id}`)}
                       />
                     ))}
                   </div>
@@ -256,7 +244,6 @@ const AuthorProfile = () => {
             </div>
           </div>
 
-          {/* ─── Sidebar (Suggestions) ─────────────────────────────────────── */}
           <div className="lg:col-span-4 space-y-6">
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <h3 className="text-gray-900 font-bold text-base mb-4">Suggested Creators</h3>
@@ -272,7 +259,6 @@ const AuthorProfile = () => {
               </button>
             </div>
 
-            {/* Suggested Posts Section */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
               <h3 className="text-gray-900 font-bold text-base mb-4">Suggested Posts</h3>
               <div className="space-y-4">
@@ -280,7 +266,7 @@ const AuthorProfile = () => {
                   suggestedPosts.map(p => (
                     <div 
                       key={p._id} 
-                      onClick={() => navigate(`/post/${p._id}`)}
+                      onClick={() => navigate(`/post/${p.slug || p._id}`)}
                       className="flex gap-3 cursor-pointer group"
                     >
                       <img 

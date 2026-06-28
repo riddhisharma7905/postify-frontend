@@ -15,7 +15,6 @@ function useDebounce(value, delay = 600) {
 const CATEGORIES = ["All", "Technology", "Business", "Education", "Career", "Lifestyle", "Health", "Travel", "Others"];
 const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1542435503-956c469947f6?w=800&auto=format&fit=crop";
 
-// Loading skeleton card
 const SkeletonCard = () => (
   <div className="bg-white rounded-[40px] overflow-hidden border border-gray-100 animate-pulse">
     <div className="h-60 bg-gray-100" />
@@ -40,7 +39,6 @@ const SkeletonCard = () => (
   </div>
 );
 
-// Featured hero post card (first/top post)
 const HeroCard = ({ post, onClick }) => (
   <div
     className="group bg-white rounded-[48px] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all duration-700 cursor-pointer mb-12 flex flex-col md:flex-row"
@@ -99,7 +97,6 @@ const HeroCard = ({ post, onClick }) => (
   </div>
 );
 
-// Regular post card
 const PostCard = ({ post, onClick }) => (
   <div
     className="group bg-white rounded-[40px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col cursor-pointer"
@@ -209,7 +206,6 @@ const Explore = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-0 font-inter">
-      {/* SaaS Hero Section */}
       <section className="bg-white border-b border-gray-100 pt-20 pb-12 px-6">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-2xl text-[12px] font-black uppercase tracking-widest mb-6 border border-blue-100/50">
@@ -222,7 +218,6 @@ const Explore = () => {
             Discover trending posts and personalized recommendations from creators worldwide.
           </p>
 
-          {/* Integrated Search Bar */}
           <div className="relative max-w-2xl mx-auto group">
             <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-300 group-focus-within:text-blue-500 transition-colors">
               <Search size={22} strokeWidth={2.5} />
@@ -245,7 +240,6 @@ const Explore = () => {
           </div>
          
 
-          {/* Category Filter Chips */}
           <div className="flex flex-wrap justify-center gap-2.5 mt-8">
             {CATEGORIES.map((cat) => (
               <button
@@ -264,7 +258,6 @@ const Explore = () => {
         </div>
       </section>
 
-      {/* Results Section */}
       <section className="max-w-7xl mx-auto px-6 mt-14">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -272,7 +265,6 @@ const Explore = () => {
           </div>
         ) : posts.length > 0 ? (
           <>
-            {/* Post count label */}
             <div className="flex items-center justify-between mb-8">
               <p className="text-[13px] font-bold text-gray-400 uppercase tracking-widest">
                 {posts.length} {posts.length === 1 ? "Article" : "Articles"} Found
@@ -288,21 +280,19 @@ const Explore = () => {
               )}
             </div>
 
-            {/* Featured Hero (first post, only when not searching) */}
             {featuredPost && !debouncedSearch.trim() && (
               <HeroCard
                 post={featuredPost}
-                onClick={() => navigate(`/post/${featuredPost._id}`)}
+                onClick={() => navigate(`/post/${featuredPost.slug || featuredPost._id}`)}
               />
             )}
 
-            {/* Grid of remaining posts */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
               {(debouncedSearch.trim() ? posts : restPosts).map((post) => (
                 <PostCard
                   key={post._id}
                   post={post}
-                  onClick={() => navigate(`/post/${post._id}`)}
+                  onClick={() => navigate(`/post/${post.slug || post._id}`)}
                 />
               ))}
             </div>
@@ -326,7 +316,6 @@ const Explore = () => {
         )}
       </section>
 
-      {/* Footer CTA Banner */}
       
     </div>
   );

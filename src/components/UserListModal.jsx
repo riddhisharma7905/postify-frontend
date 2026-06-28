@@ -6,7 +6,6 @@ const UserListModal = ({ title, users = [], onClose }) => {
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
-  // Parse logged-in user ID from token
   const getMyId = () => {
     try {
       const token = localStorage.getItem("authToken");
@@ -35,7 +34,6 @@ const UserListModal = ({ title, users = [], onClose }) => {
         className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-8 pt-8 pb-5 border-b border-gray-50">
           <div>
             <h3 className="text-xl font-black text-gray-900 tracking-tight">{title}</h3>
@@ -49,7 +47,6 @@ const UserListModal = ({ title, users = [], onClose }) => {
           </button>
         </div>
 
-        {/* Search */}
         <div className="px-8 py-4 border-b border-gray-50">
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" strokeWidth={2.5} />
@@ -64,7 +61,6 @@ const UserListModal = ({ title, users = [], onClose }) => {
           </div>
         </div>
 
-        {/* User List */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
           {filtered.length === 0 ? (
             <div className="text-center py-12">

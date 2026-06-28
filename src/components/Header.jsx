@@ -22,7 +22,6 @@ function Header({ isLoggedIn, onLogout }) {
 
   return (
     <header className="flex justify-between items-center px-8 py-4 shadow bg-white sticky top-0 z-50">
-      {/* ===== LOGO ===== */}
       <div
         className="flex items-center gap-2 cursor-pointer"
         onClick={() => navigate("/home")}
@@ -33,7 +32,6 @@ function Header({ isLoggedIn, onLogout }) {
         </h1>
       </div>
 
-      {/* ===== NAVIGATION ===== */}
       <nav className="flex gap-6 text-gray-700 font-medium">
         <Link
           to="/explore"

@@ -1,7 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2, Pencil, CornerDownRight } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2, Pencil, CornerDownRight, User } from "lucide-react";
 import { request } from "../api";
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+};
 
 const PostDetails = () => {
   const { id } = useParams();
@@ -12,8 +17,8 @@ const PostDetails = () => {
   const [commentText, setCommentText] = useState("");
   const [isLiking, setIsLiking] = useState(false);
   const [recommended, setRecommended] = useState([]);
-  // Replies: { [commentId]: isOpen, replyText, isSubmitting, showAll }
   const [replyState, setReplyState] = useState({});
+  const [userData, setUserData] = useState(null);
   const token = localStorage.getItem("authToken");
 
   const parseToken = (t) => {
@@ -22,7 +27,15 @@ const PostDetails = () => {
 
   const userId = token ? parseToken(token)?.id : null;
 
-  // Smart navigate: own profile → dashboard, others → author page
+  const fallbackUser = post ? (
+    (post.author?._id === userId) ? post.author :
+    (post.comments?.find(c => c.user?._id === userId)?.user) ||
+    (post.comments?.flatMap(c => c.replies || []).find(r => r.user?._id === userId)?.user) ||
+    null
+  ) : null;
+
+  const currentUser = userData || fallbackUser;
+
   const navigateToUser = (targetUserId) => {
     if (targetUserId === userId) navigate("/dashboard");
     else navigate(`/author/${targetUserId}`);
@@ -35,6 +48,10 @@ const PostDetails = () => {
       if (token) {
         const decoded = parseToken(token);
         if (decoded) headers["x-user-id"] = decoded.id;
+        
+        request("/api/users/dashboard", "GET", null, { Authorization: `Bearer ${token}` })
+          .then(data => setUserData(data))
+          .catch(err => console.error("Failed to fetch user data:", err));
       }
       const data = await request(`/api/posts/${id}`, "GET", null, headers);
       setPost(data);
@@ -68,7 +85,7 @@ const PostDetails = () => {
     if (!token) return alert("Please login to like posts!");
     try {
       setIsLiking(true);
-      const updated = await request(`/api/posts/${id}/like`, "POST", null, { Authorization: `Bearer ${token}` });
+      const updated = await request(`/api/posts/${post?._id || id}/like`, "POST", null, { Authorization: `Bearer ${token}` });
       setPost(updated);
     } catch { alert("Error liking post"); }
     finally { setIsLiking(false); }
@@ -79,7 +96,7 @@ const PostDetails = () => {
     if (!token) { alert("Please login to comment!"); return; }
     if (!commentText.trim()) return;
     try {
-      const updated = await request(`/api/posts/${id}/comment`, "POST", { text: commentText }, { Authorization: `Bearer ${token}` });
+      const updated = await request(`/api/posts/${post?._id || id}/comment`, "POST", { text: commentText }, { Authorization: `Bearer ${token}` });
       setPost(updated);
       setCommentText("");
     } catch (err) {
@@ -90,12 +107,11 @@ const PostDetails = () => {
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("Delete this comment?")) return;
     try {
-      await request(`/api/posts/${id}/comment/${commentId}`, "DELETE", null, { Authorization: `Bearer ${token}` });
+      await request(`/api/posts/${post?._id || id}/comment/${commentId}`, "DELETE", null, { Authorization: `Bearer ${token}` });
       setPost((prev) => ({ ...prev, comments: prev.comments.filter((c) => c._id !== commentId) }));
     } catch { alert("Error deleting comment"); }
   };
 
-  // ── Reply helpers ──
   const setReply = (commentId, patch) =>
     setReplyState((prev) => ({ ...prev, [commentId]: { ...prev[commentId], ...patch } }));
 
@@ -116,7 +132,7 @@ const PostDetails = () => {
     setReply(commentId, { isSubmitting: true });
     try {
       const updated = await request(
-        `/api/posts/${id}/comment/${commentId}/reply`,
+        `/api/posts/${post?._id || id}/comment/${commentId}/reply`,
         "POST",
         { text },
         { Authorization: `Bearer ${token}` }
@@ -133,7 +149,7 @@ const PostDetails = () => {
     if (!window.confirm("Delete this reply?")) return;
     try {
       const updated = await request(
-        `/api/posts/${id}/comment/${commentId}/reply/${replyId}`,
+        `/api/posts/${post?._id || id}/comment/${commentId}/reply/${replyId}`,
         "DELETE",
         null,
         { Authorization: `Bearer ${token}` }
@@ -169,19 +185,15 @@ const PostDetails = () => {
 
   const hasLiked = Array.isArray(post.likes) && post.likes.some((like) => like === userId || like?._id === userId);
 
-  // Calculate total comments (top level + all replies)
   const totalComments = (post?.comments || []).reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 sm:px-6 py-10 flex justify-center">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
         
-        {/* ── Left Column: Post Content & Recommendations ── */}
         <div className="space-y-8 min-w-0">
           
-          {/* Post Details Card */}
           <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
-            {/* Top bar */}
             <div className="flex items-center justify-between mb-6">
               <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-blue-600 transition">
                 <ArrowLeft size={18} className="mr-2" /> Back
@@ -197,8 +209,6 @@ const PostDetails = () => {
             </div>
 
             <h1 className="text-3xl font-bold text-gray-800 mb-3 break-words">{post.title}</h1>
-
-            {/* Meta */}
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
               <span className="flex items-center gap-1"><Calendar size={14} />{new Date(post.createdAt).toLocaleDateString()}</span>
               <button
@@ -213,17 +223,14 @@ const PostDetails = () => {
               <span className="flex items-center gap-1">👁 {post.views || 0} views</span>
             </div>
 
-            {/* Cover image */}
             {post.image && (
               <div className="mb-6 rounded-xl overflow-hidden h-64 sm:h-80">
                 <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
               </div>
             )}
 
-            {/* Content */}
             <div className="prose max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
 
-            {/* Tags */}
             {post.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {post.tags.map((tag, i) => (
@@ -232,7 +239,6 @@ const PostDetails = () => {
               </div>
             )}
 
-            {/* Author */}
             {post.author && (
               <div className="mt-8 border-t pt-6 flex items-center gap-4">
                 {post.author.profileImage ? (
@@ -267,7 +273,6 @@ const PostDetails = () => {
             )}
           </div>
 
-          {/* Recommendations Card */}
           {recommended.length > 0 && (
             <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">Recommended Posts ✨</h2>
@@ -275,7 +280,7 @@ const PostDetails = () => {
                 {recommended.map((rec) => (
                   <div
                     key={rec._id}
-                    onClick={() => { navigate(`/post/${rec._id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                    onClick={() => { navigate(`/post/${rec.slug || rec._id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
                     className="cursor-pointer bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border transition flex flex-col justify-between"
                   >
                     <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{rec.title}</h3>
@@ -291,16 +296,22 @@ const PostDetails = () => {
           )}
         </div>
 
-        {/* ── Right Column: Comments (Sticky) ── */}
         <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8 lg:sticky lg:top-6 max-h-[calc(100vh-3rem)] overflow-y-auto min-w-0">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">
             Comments <span className="text-gray-400 text-sm font-normal">({totalComments})</span>
           </h2>
 
-          {/* New comment form */}
           <form onSubmit={handleAddComment} className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
-              {userId ? "Y" : "?"}
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 overflow-hidden">
+              {currentUser ? (
+                currentUser.profileImage ? (
+                  <img src={currentUser.profileImage} alt={currentUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  getInitials(currentUser.name)
+                )
+              ) : (
+                userId ? <User size={16} className="opacity-50" /> : "?"
+              )}
             </div>
             <input
               type="text"
@@ -318,20 +329,17 @@ const PostDetails = () => {
             </button>
           </form>
 
-          {/* Comments list */}
           <div className="space-y-5">
             {post.comments?.length > 0 ? (
               post.comments.map((comment) => {
                 const rs = replyState[comment._id] || {};
                 return (
                   <div key={comment._id} className="group">
-                    {/* Comment bubble */}
                     <div className={`rounded-xl p-3 text-sm border ${
                       comment.isToxic ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-100 text-gray-700"
                     }`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 flex-1">
-                          {/* Commenter avatar */}
                           {comment.user?.profileImage ? (
                             <img 
                               src={comment.user.profileImage} 
@@ -360,7 +368,6 @@ const PostDetails = () => {
                               <p className="text-[11px] text-red-500 mt-1 font-semibold">⚠️ Flagged as toxic</p>
                             )}
 
-                            {/* Action row */}
                             <div className="flex items-center gap-3 mt-1.5 w-full flex-wrap">
                               <span className="text-[10px] text-gray-400">
                                 {new Date(comment.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
@@ -383,7 +390,6 @@ const PostDetails = () => {
                           </div>
                         </div>
 
-                        {/* Delete comment (own only) */}
                         {comment.user?._id === userId && (
                           <button
                             onClick={() => handleDeleteComment(comment._id)}
@@ -395,10 +401,8 @@ const PostDetails = () => {
                       </div>
                     </div>
 
-                    {/* ── Replies ── */}
                     {(comment.replies?.length > 0 || rs.isOpen) && (
                       <div className="ml-10 mt-1.5 space-y-1.5">
-                        {/* Existing replies */}
                         {comment.replies?.slice(0, rs.showAll ? comment.replies.length : 1).map((reply) => (
                           <div
                             key={reply._id}
@@ -455,7 +459,6 @@ const PostDetails = () => {
                           </div>
                         ))}
 
-                        {/* Show more/less toggle */}
                         {comment.replies?.length > 1 && (
                           <button
                             onClick={() => setReply(comment._id, { showAll: !rs.showAll })}
@@ -466,7 +469,6 @@ const PostDetails = () => {
                           </button>
                         )}
 
-                        {/* Reply input */}
                         {rs.isOpen && (
                           <form
                             onSubmit={(e) => handleAddReply(e, comment._id)}

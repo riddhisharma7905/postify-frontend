@@ -154,7 +154,7 @@ const Dashboard = () => {
 
       setProfileForm((prev) => ({ ...prev, [type === "profile" ? "profileImage" : "coverImage"]: "" }));
       setUserData(res);
-      // No alert needed for a smoother experience, but we can add one if desired.
+     
     } catch (err) {
       console.error("Delete image error:", err);
       alert("Failed to delete image: " + err.message);
@@ -228,11 +228,9 @@ const Dashboard = () => {
   const publishedPosts = posts.filter(p => !p.scheduledAt || new Date(p.scheduledAt) <= new Date());
   const scheduledPosts = posts.filter(p => p.scheduledAt && new Date(p.scheduledAt) > new Date());
 
-  // Process data for Total Reach Analysis Line Chart
   const reachData = useMemo(() => {
     if (!publishedPosts.length) return [];
     
-    // Sort chronologically
     const sorted = [...publishedPosts].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     
     let cumulativeReach = 0;
@@ -331,7 +329,6 @@ const Dashboard = () => {
       )}
       <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
         
-        {/* Welcome Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div className="flex items-center gap-4">
             {userData.profileImage ? (
@@ -365,7 +362,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Tab Navigation */}
         <div className="bg-gray-50/80 p-1.5 rounded-xl flex items-center gap-1 mb-8 border border-gray-100 w-full overflow-x-auto">
           {tabs.map((tab) => {
             const tabKey = tab.toLowerCase();
@@ -388,7 +384,6 @@ const Dashboard = () => {
 
         {activeTab === "overview" && (
           <div className="space-y-8 animate-in fade-in duration-300">
-            {/* 5 Stats Cards on Head */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {stats.map((stat, i) => (
                 <div
@@ -412,9 +407,7 @@ const Dashboard = () => {
               ))}
             </div>
 
-            {/* Content Below Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Performance */}
               <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7 flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-2.5">
@@ -434,7 +427,7 @@ const Dashboard = () => {
                       <div
                         key={post._id}
                         className="p-5 bg-gray-50/80 rounded-[24px] hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border border-transparent hover:border-blue-100 flex flex-col justify-between group"
-                        onClick={() => navigate(`/post/${post._id}`)}
+                        onClick={() => navigate(`/post/${post.slug || post._id}`)}
                       >
                         <h3 className="font-bold text-gray-900 mb-3 line-clamp-2 text-[14px] leading-tight group-hover:text-blue-600 transition-colors">
                           {post.title}
@@ -469,7 +462,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Publishing Schedule */}
               <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-7 flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2.5">
@@ -496,7 +488,7 @@ const Dashboard = () => {
                             </p>
                           </div>
                           <button 
-                            onClick={() => navigate(`/post/${post._id}`)}
+                            onClick={() => navigate(`/post/${post.slug || post._id}`)}
                             className="bg-white p-2 rounded-xl text-gray-400 hover:text-blue-500 hover:shadow-sm transition-all opacity-0 group-hover:opacity-100"
                           >
                             <Eye size={16} />
@@ -517,7 +509,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Existing Posts Tab Content */}
         {activeTab === "my posts" && (
           <div className="animate-in fade-in duration-300">
             <div className="flex justify-between items-center mb-6">
@@ -548,10 +539,9 @@ const Dashboard = () => {
                     key={post._id}
                     className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col relative"
                   >
-                    {/* Card Actions Overlay */}
                     <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
-                        onClick={() => navigate(`/post/${post._id}`)}
+                        onClick={() => navigate(`/post/${post.slug || post._id}`)}
                         className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
                         title="View post"
                       >
@@ -583,14 +573,12 @@ const Dashboard = () => {
                         <Trash2 size={18} />
                       </button>
                     </div>
-                    {/* Pinned badge */}
                     {pinnedPostId === post._id && (
                       <div className="absolute top-4 left-4 z-20 bg-yellow-400 text-yellow-900 text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-md">
                         <Pin size={10} /> Pinned
                       </div>
                     )}
 
-                    {/* Card Image */}
                     <div className="relative h-44 overflow-hidden">
                       <img
                         src={post.image || "https://images.unsplash.com/photo-1542435503-956c469947f6?w=800&auto=format&fit=crop"}
@@ -600,7 +588,6 @@ const Dashboard = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
 
-                    {/* Card Content */}
                     <div className="p-6 flex-1 flex flex-col">
                       <div className="text-[11px] font-black text-blue-600 uppercase tracking-widest mb-3 opacity-70">
                         {new Date(post.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -612,7 +599,6 @@ const Dashboard = () => {
                         {post.content}
                       </p>
 
-                      {/* Footer Stats */}
                       <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
                         <div className="flex gap-4 text-[11px] font-bold text-gray-400">
                           <span className="flex items-center gap-1.5"><Eye size={14} /> {post.views || 0}</span>
@@ -628,7 +614,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Scheduled Posts Tab Content */}
         {activeTab === "scheduled" && (
           <div className="animate-in fade-in duration-300">
             <div className="flex justify-between items-center mb-6">
@@ -655,10 +640,9 @@ const Dashboard = () => {
                     key={post._id}
                     className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 flex flex-col relative"
                   >
-                    {/* Card Actions */}
                     <div className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
-                        onClick={() => navigate(`/post/${post._id}`)}
+                        onClick={() => navigate(`/post/${post.slug || post._id}`)}
                         className="bg-white/95 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-lg hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110"
                         title="Preview post"
                       >
@@ -673,13 +657,11 @@ const Dashboard = () => {
                       </button>
                     </div>
 
-                    {/* Image Area */}
                     <div className="relative h-44 overflow-hidden bg-gray-100 italic flex items-center justify-center text-gray-300">
                       <Calendar size={48} className="opacity-20" />
                       <div className="absolute inset-0 bg-blue-600/5 mix-blend-multiply"></div>
                     </div>
 
-                    {/* Content */}
                     <div className="p-6 flex-1 flex flex-col">
                       <div className="flex items-center gap-2 mb-4">
                         <div className="px-3 py-1 bg-blue-50 rounded-lg text-blue-600 text-[10px] font-black uppercase tracking-widest border border-blue-100/50">
@@ -691,7 +673,6 @@ const Dashboard = () => {
                         {post.title}
                       </h3>
                       
-                      {/* Priority Time Label */}
                       <div className="bg-gray-50 rounded-2xl p-4 mt-auto border border-gray-100/50 group-hover:border-blue-100 group-hover:bg-blue-50/50 transition-colors duration-300">
                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Publishing at</p>
                          <div className="flex items-center gap-2 text-gray-900 font-bold text-[13px]">
@@ -712,10 +693,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Analytics Tab Content */}
         {activeTab === "analytics" && (
           <div className="animate-in fade-in duration-500 space-y-8 pb-10">
-            {/* Top Metrics Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-center">
                 <p className="text-[12px] font-bold text-gray-500 uppercase tracking-widest mb-1">Engagement Rate</p>
@@ -737,7 +716,6 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                <div className="lg:col-span-2 space-y-6">
-                 {/* Area Chart - Reach */}
                  <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
                    <div className="flex justify-between items-center mb-6">
                      <div>
@@ -764,7 +742,6 @@ const Dashboard = () => {
                    </div>
                  </div>
 
-                 {/* Bar Chart - Recent Performance */}
                  <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm">
                    <div className="flex justify-between items-center mb-6">
                      <div>
@@ -787,14 +764,13 @@ const Dashboard = () => {
                  </div>
                </div>
 
-               {/* Top Posts Column */}
                <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm flex flex-col h-full">
                  <h2 className="text-xl font-bold text-gray-900 tracking-tight mb-2">Top Performing Posts</h2>
                  <p className="text-sm text-gray-500 mb-6">Your most engaging content</p>
                  
                  <div className="flex-1 space-y-4">
                    {topPosts.length > 0 ? topPosts.map((post, i) => (
-                     <div key={post._id} onClick={() => navigate(`/post/${post._id}`)} className="p-4 bg-gray-50/80 rounded-2xl cursor-pointer hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors flex gap-4 items-center group">
+                     <div key={post._id} onClick={() => navigate(`/post/${post.slug || post._id}`)} className="p-4 bg-gray-50/80 rounded-2xl cursor-pointer hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-colors flex gap-4 items-center group">
                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-lg font-black text-gray-400 group-hover:text-blue-500 border border-gray-100">
                          #{i + 1}
                        </div>
@@ -815,11 +791,9 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Profile Tab Content */}
         {activeTab === "profile" && (
           <div className="animate-in fade-in duration-500 max-w-5xl mx-auto pb-16">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Account Management (Side) */}
               <div className="space-y-6">
                 <div className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm text-center">
                   <div className="relative group w-24 h-24 mx-auto mb-4">
@@ -859,7 +833,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {/* Profile Information (Main) */}
               <div className="lg:col-span-2">
                 <form onSubmit={handleProfileUpdate} className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-10">
                   <div>

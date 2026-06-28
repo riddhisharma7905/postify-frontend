@@ -48,7 +48,6 @@ function App() {
             <Route path="/author/:id" element={<AuthorProfile />} />
             <Route path="/legal" element={<Legal />} />
 
-            {/* Protected Routes */}
             <Route 
               path="/dashboard" 
               element={isLoggedIn ? <Dashboard /> : <Navigate to="/home" replace />} 
@@ -62,7 +61,6 @@ function App() {
               element={isLoggedIn ? <EditPost /> : <Navigate to="/login" replace />} 
             />
 
-            {/* Catch-all */}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </main>

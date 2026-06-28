@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { request } from "../api";
 
-// ── Time helper ───────────────────────────────────────────────────────────────
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const s = Math.floor(diff / 1000);
@@ -28,7 +27,6 @@ function timeAgo(dateStr) {
   });
 }
           
-// ── Notification type metadata ────────────────────────────────────────────────
 const TYPE_META = {
   like: {
     icon: Heart,
@@ -62,13 +60,12 @@ const TYPE_META = {
   },
 };
 
-// ── Component ─────────────────────────────────────────────────────────────────
 export default function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [sseStatus, setSseStatus] = useState("idle"); // idle | connected | error
+  const [sseStatus, setSseStatus] = useState("idle");
   const panelRef = useRef(null);
   const sseRef = useRef(null);
   const navigate = useNavigate();
@@ -77,12 +74,10 @@ export default function NotificationPanel() {
   const backendUrl =
     process.env.REACT_APP_BACKEND_URL || "http://localhost:5001";
 
-  // ── SSE connection ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!token) return;
 
     function connect() {
-      // Close any existing connection
       if (sseRef.current) {
         sseRef.current.close();
       }
@@ -99,9 +94,7 @@ export default function NotificationPanel() {
         try {
           const newNotif = JSON.parse(e.data);
 
-          // Prepend to list (most recent first)
           setNotifications((prev) => {
-            // Replace if already exists (re-notified same action)
             const exists = prev.find((n) => n._id === newNotif._id);
             if (exists) {
               return prev.map((n) => (n._id === newNotif._id ? newNotif : n));
@@ -109,7 +102,6 @@ export default function NotificationPanel() {
             return [newNotif, ...prev];
           });
 
-          // Bump unread count
           if (!newNotif.read) {
             setUnreadCount((c) => c + 1);
           }
@@ -119,7 +111,6 @@ export default function NotificationPanel() {
       es.onerror = () => {
         setSseStatus("error");
         es.close();
-        // Reconnect after 5s
         setTimeout(connect, 5000);
       };
     }
@@ -134,7 +125,6 @@ export default function NotificationPanel() {
     };
   }, [token, backendUrl]);
 
-  // ── Fetch initial unread count ────────────────────────────────────────────
   useEffect(() => {
     if (!token) return;
     request("/api/notifications/unread-count", "GET", null, {
@@ -144,7 +134,6 @@ export default function NotificationPanel() {
       .catch(() => {});
   }, [token]);
 
-  // ── Fetch full list when panel opens ─────────────────────────────────────
   const fetchNotifications = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -153,7 +142,6 @@ export default function NotificationPanel() {
         Authorization: `Bearer ${token}`,
       });
       setNotifications(data);
-      // Recalculate unread from fresh data
       setUnreadCount(data.filter((n) => !n.read).length);
     } catch (_) {
     } finally {
@@ -178,7 +166,6 @@ export default function NotificationPanel() {
     if (open) fetchNotifications();
   }, [open, fetchNotifications]);
 
-  // ── Close on outside click ────────────────────────────────────────────────
   useEffect(() => {
     function handleClick(e) {
       if (panelRef.current && !panelRef.current.contains(e.target)) {
@@ -189,7 +176,6 @@ export default function NotificationPanel() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // ── Click single notification ─────────────────────────────────────────────
   const handleNotificationClick = async (notif) => {
     if (!notif.read) {
       try {
@@ -204,7 +190,7 @@ export default function NotificationPanel() {
     }
 
     if (notif.post?._id) {
-      navigate(`/post/${notif.post._id}`);
+      navigate(`/post/${notif.post.slug || notif.post._id}`);
       setOpen(false);
     } else if (notif.type === "follow" && notif.sender?._id) {
       navigate(`/author/${notif.sender._id}`);
@@ -216,7 +202,6 @@ export default function NotificationPanel() {
 
   return (
     <div className="notification-wrapper" ref={panelRef}>
-      {/* ── Bell Button ── */}
       <button
         id="notification-bell-btn"
         className={`notification-bell-btn ${open ? "active" : ""}`}
@@ -230,17 +215,14 @@ export default function NotificationPanel() {
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-        {/* SSE live dot */}
         {sseStatus === "connected" && (
           <span className="sse-live-dot" title="Live" />
         )}
       </button>
 
-      {/* ── Sliding Drawer ── */}
       <div
         className={`notification-panel ${open ? "notification-panel--open" : ""}`}
       >
-        {/* Header */}
         <div className="notif-panel-header">
           <div className="notif-panel-title">
             <Bell size={18} strokeWidth={2.5} />
@@ -268,7 +250,6 @@ export default function NotificationPanel() {
           </div>
         </div>
 
-        {/* Body */}
         <div className="notif-panel-body">
           {loading ? (
             <div className="notif-empty">
@@ -315,7 +296,6 @@ export default function NotificationPanel() {
         </div>
       </div>
 
-      {/* Mobile backdrop */}
       {open && (
         <div
           className="notif-backdrop"

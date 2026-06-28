@@ -123,7 +123,6 @@ const Legal = () => {
     <div className="min-h-screen bg-[#FDFDFC] text-slate-900 font-sans selection:bg-slate-200">
       <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32 flex flex-col lg:flex-row gap-16 lg:gap-24 relative">
         
-        {/* Sticky Sidebar Navigation */}
         <aside className="lg:w-1/3 flex-shrink-0">
           <div className="sticky top-32">
             <p className="text-slate-400 font-medium tracking-widest text-xs uppercase mb-4">Postify Directory</p>
@@ -153,7 +152,6 @@ const Legal = () => {
           </div>
         </aside>
 
-        {/* Scrolling Content Area */}
         <main className="lg:w-2/3 space-y-32">
           {sections.map(({ id, title, subtitle, content }) => (
             <section 

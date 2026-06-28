@@ -56,7 +56,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-900">
-      {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
