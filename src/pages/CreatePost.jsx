@@ -183,15 +183,6 @@ const CreatePost = () => {
           </button>
 
           <div className="w-32 flex justify-end">
-            {userData && (
-              <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200">
-                {userData.profileImage ? (
-                  <img src={userData.profileImage} alt={userData.name} className="w-full h-full object-cover" />
-                ) : (
-                  getInitials(userData.name)
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

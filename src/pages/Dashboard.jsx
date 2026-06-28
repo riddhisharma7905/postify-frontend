@@ -527,12 +527,6 @@ const Dashboard = () => {
           <div className="transition-opacity duration-300">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">My Posts</h2>
-              <button
-                onClick={() => navigate('/createpost')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition"
-              >
-                <PlusCircle size={18} /> New Post
-              </button>
             </div>
 
             {publishedPosts.length === 0 ? (
