@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { User, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { request } from "../api";
-import logo from "../assets/logo.png";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { User, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { request } from '../api';
+import logo from '../assets/logo.png';
 
 const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
     agreeToTerms: false,
   });
 
@@ -20,23 +20,23 @@ const Register = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert("⚠️ Passwords do not match!");
+      alert('⚠️ Passwords do not match!');
       return;
     }
 
     try {
-      const res = await request("/api/auth/register", "POST", {
+      const res = await request('/api/auth/register', 'POST', {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
       });
 
-      console.log("✅ Register success:", res);
-      alert("🎉 Registered successfully!");
-      navigate("/login");
+      console.log('✅ Register success:', res);
+      alert('🎉 Registered successfully!');
+      navigate('/login');
     } catch (err) {
-      console.error("❌ Registration error:", err);
-      alert("Registration failed: " + err.message);
+      console.error('❌ Registration error:', err);
+      alert('Registration failed: ' + err.message);
     }
   };
 
@@ -44,7 +44,7 @@ const Register = () => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
@@ -53,12 +53,9 @@ const Register = () => {
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-md">
         <img src={logo} alt="Logo" className="h-12 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-center mb-4">Create Account</h2>
-        <p className="text-gray-600 text-center mb-6">
-          Start sharing your stories with the world.
-        </p>
+        <p className="text-gray-600 text-center mb-6">Start sharing your stories with the world.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
@@ -88,7 +85,7 @@ const Register = () => {
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
-              type={showPassword ? "text" : "password"}
+              type={showPassword ? 'text' : 'password'}
               name="password"
               placeholder="Password"
               value={formData.password}
@@ -105,11 +102,10 @@ const Register = () => {
             </button>
           </div>
 
-
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
-              type={showConfirmPassword ? "text" : "password"}
+              type={showConfirmPassword ? 'text' : 'password'}
               name="confirmPassword"
               placeholder="Confirm Password"
               value={formData.confirmPassword}
@@ -126,7 +122,6 @@ const Register = () => {
             </button>
           </div>
 
-   
           <div className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -137,11 +132,11 @@ const Register = () => {
               className="w-4 h-4"
             />
             <span>
-              I agree to the{" "}
+              I agree to the{' '}
               <Link to="/terms" className="text-blue-600 hover:underline">
                 Terms
-              </Link>{" "}
-              and{" "}
+              </Link>{' '}
+              and{' '}
               <Link to="/privacy" className="text-blue-600 hover:underline">
                 Privacy Policy
               </Link>
@@ -156,7 +151,7 @@ const Register = () => {
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-4">
-          Already have an account?{" "}
+          Already have an account?{' '}
           <Link to="/login" className="text-blue-600 font-medium hover:underline">
             Sign in
           </Link>

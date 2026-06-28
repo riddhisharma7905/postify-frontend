@@ -1,43 +1,47 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { X, Search, User } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, Search, User } from 'lucide-react';
 
 const UserListModal = ({ title, users = [], onClose }) => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
   const getMyId = () => {
     try {
-      const token = localStorage.getItem("authToken");
+      const token = localStorage.getItem('authToken');
       if (!token) return null;
-      return JSON.parse(atob(token.split(".")[1]))?.id;
-    } catch { return null; }
+      return JSON.parse(atob(token.split('.')[1]))?.id;
+    } catch {
+      return null;
+    }
   };
 
   const myId = getMyId();
 
-  const filtered = users.filter((u) =>
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
+  const filtered = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const handleUserClick = (userId) => {
     onClose();
-    if (userId === myId) navigate("/dashboard");
+    if (userId === myId) navigate('/dashboard');
     else navigate(`/author/${userId}`);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40 " />
       <div
-        className="relative bg-white rounded-[40px] shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative bg-white rounded-3xl shadow-lg w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden transition-opacity zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-8 pt-8 pb-5 border-b border-gray-50">
           <div>
-            <h3 className="text-xl font-black text-gray-900 tracking-tight">{title}</h3>
-            <p className="text-[12px] text-gray-400 font-bold mt-0.5">{users.length} {users.length === 1 ? "person" : "people"}</p>
+            <h3 className="text-xl font-black text-gray-900 ">{title}</h3>
+            <p className="text-sm text-gray-400 font-bold mt-0.5">
+              {users.length} {users.length === 1 ? 'person' : 'people'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -78,17 +82,21 @@ const UserListModal = ({ title, users = [], onClose }) => {
                   className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-blue-50 transition-colors group text-left"
                 >
                   {user.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                    <img
+                      src={user.profileImage}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 group-hover:bg-blue-200 transition-colors">
-                      {user.name?.charAt(0)?.toUpperCase() || "U"}
+                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-sm group-hover:text-blue-600 transition-colors truncate">
                       {user.name}
                     </p>
-                    <p className="text-[11px] text-gray-400 font-medium truncate">{user.email}</p>
+                    <p className="text-xs text-gray-400 font-medium truncate">{user.email}</p>
                   </div>
                   <div className="text-gray-200 group-hover:text-blue-400 transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">

@@ -1,20 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Heart,
-  MessageCircle,
-  UserPlus,
-  FileText,
-  X,
-  CheckCheck,
-} from "lucide-react";
-import { request } from "../api";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Heart, MessageCircle, UserPlus, FileText, X, CheckCheck } from 'lucide-react';
+import { request } from '../api';
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const s = Math.floor(diff / 1000);
-  if (s < 60) return "just now";
+  if (s < 60) return 'just now';
   const m = Math.floor(s / 60);
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
@@ -22,40 +14,40 @@ function timeAgo(dateStr) {
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}d ago`;
   return new Date(dateStr).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
+    month: 'short',
+    day: 'numeric',
   });
 }
-          
+
 const TYPE_META = {
   like: {
     icon: Heart,
-    color: "text-pink-500",
-    bg: "bg-pink-50",
-    label: (n) => `liked your post "${n.post?.title || "a post"}"`,
+    color: 'text-pink-500',
+    bg: 'bg-pink-50',
+    label: (n) => `liked your post "${n.post?.title || 'a post'}"`,
   },
   comment: {
     icon: MessageCircle,
-    color: "text-blue-500",
-    bg: "bg-blue-50",
-    label: (n) => `commented on "${n.post?.title || "a post"}"`,
+    color: 'text-blue-500',
+    bg: 'bg-blue-50',
+    label: (n) => `commented on "${n.post?.title || 'a post'}"`,
   },
   follow: {
     icon: UserPlus,
-    color: "text-purple-500",
-    bg: "bg-purple-50",
-    label: () => "started following you",
+    color: 'text-purple-500',
+    bg: 'bg-purple-50',
+    label: () => 'started following you',
   },
   new_post: {
     icon: FileText,
-    color: "text-green-500",
-    bg: "bg-green-50",
-    label: (n) => `published "${n.post?.title || "a new post"}"`,
+    color: 'text-green-500',
+    bg: 'bg-green-50',
+    label: (n) => `published "${n.post?.title || 'a new post'}"`,
   },
   reply: {
     icon: MessageCircle,
-    color: "text-indigo-500",
-    bg: "bg-indigo-50",
+    color: 'text-indigo-500',
+    bg: 'bg-indigo-50',
     label: () => `replied to your comment`,
   },
 };
@@ -65,14 +57,13 @@ export default function NotificationPanel() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [sseStatus, setSseStatus] = useState("idle");
+  const [sseStatus, setSseStatus] = useState('idle');
   const panelRef = useRef(null);
   const sseRef = useRef(null);
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("authToken");
-  const backendUrl =
-    process.env.REACT_APP_BACKEND_URL || "http://localhost:5001";
+  const token = localStorage.getItem('authToken');
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5001';
 
   useEffect(() => {
     if (!token) return;
@@ -86,11 +77,11 @@ export default function NotificationPanel() {
       const es = new EventSource(url);
       sseRef.current = es;
 
-      es.addEventListener("connected", () => {
-        setSseStatus("connected");
+      es.addEventListener('connected', () => {
+        setSseStatus('connected');
       });
 
-      es.addEventListener("notification", (e) => {
+      es.addEventListener('notification', (e) => {
         try {
           const newNotif = JSON.parse(e.data);
 
@@ -109,7 +100,7 @@ export default function NotificationPanel() {
       });
 
       es.onerror = () => {
-        setSseStatus("error");
+        setSseStatus('error');
         es.close();
         setTimeout(connect, 5000);
       };
@@ -127,7 +118,7 @@ export default function NotificationPanel() {
 
   useEffect(() => {
     if (!token) return;
-    request("/api/notifications/unread-count", "GET", null, {
+    request('/api/notifications/unread-count', 'GET', null, {
       Authorization: `Bearer ${token}`,
     })
       .then((d) => setUnreadCount(d.count || 0))
@@ -138,7 +129,7 @@ export default function NotificationPanel() {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await request("/api/notifications", "GET", null, {
+      const data = await request('/api/notifications', 'GET', null, {
         Authorization: `Bearer ${token}`,
       });
       setNotifications(data);
@@ -151,14 +142,14 @@ export default function NotificationPanel() {
 
   const handleMarkAllRead = async () => {
     try {
-      await request("/api/notifications/mark-all-read", "PUT", null, {
+      await request('/api/notifications/mark-all-read', 'PUT', null, {
         Authorization: `Bearer ${token}`,
       });
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-      alert("Marked all as read");
+      alert('Marked all as read');
     } catch (err) {
-      console.error("Mark all read error:", err);
+      console.error('Mark all read error:', err);
     }
   };
 
@@ -172,19 +163,17 @@ export default function NotificationPanel() {
         setOpen(false);
       }
     }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    if (open) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
   const handleNotificationClick = async (notif) => {
     if (!notif.read) {
       try {
-        await request(`/api/notifications/${notif._id}/read`, "PUT", null, {
+        await request(`/api/notifications/${notif._id}/read`, 'PUT', null, {
           Authorization: `Bearer ${token}`,
         });
-        setNotifications((prev) =>
-          prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n))
-        );
+        setNotifications((prev) => prev.map((n) => (n._id === notif._id ? { ...n, read: true } : n)));
         setUnreadCount((c) => Math.max(0, c - 1));
       } catch (_) {}
     }
@@ -192,7 +181,7 @@ export default function NotificationPanel() {
     if (notif.post?._id) {
       navigate(`/post/${notif.post.slug || notif.post._id}`);
       setOpen(false);
-    } else if (notif.type === "follow" && notif.sender?._id) {
+    } else if (notif.type === 'follow' && notif.sender?._id) {
       navigate(`/author/${notif.sender._id}`);
       setOpen(false);
     }
@@ -204,47 +193,33 @@ export default function NotificationPanel() {
     <div className="notification-wrapper" ref={panelRef}>
       <button
         id="notification-bell-btn"
-        className={`notification-bell-btn ${open ? "active" : ""}`}
+        className={`notification-bell-btn ${open ? 'active' : ''}`}
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
         title="Notifications"
       >
         <Bell size={20} strokeWidth={2} />
-        {unreadCount > 0 && (
-          <span className="notification-badge">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-        {sseStatus === "connected" && (
-          <span className="sse-live-dot" title="Live" />
-        )}
+        {unreadCount > 0 && <span className="notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        {sseStatus === 'connected' && <span className="sse-live-dot" title="Live" />}
       </button>
 
-      <div
-        className={`notification-panel ${open ? "notification-panel--open" : ""}`}
-      >
+      <div className={`notification-panel ${open ? 'notification-panel--open' : ''}`}>
         <div className="notif-panel-header">
           <div className="notif-panel-title">
             <Bell size={18} strokeWidth={2.5} />
             <span>Notifications</span>
-            {unreadCount > 0 && (
-              <span className="notif-count-pill">{unreadCount} new</span>
-            )}
+            {unreadCount > 0 && <span className="notif-count-pill">{unreadCount} new</span>}
           </div>
           <div className="notif-panel-actions">
             <div className="flex items-center gap-4">
               <button
                 onClick={handleMarkAllRead}
-                className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors"
+                className="text-xs font-black uppercase tracking-wide text-blue-600 hover:text-blue-800 transition-colors"
               >
                 Mark all read
               </button>
             </div>
-            <button
-              className="notif-close-btn"
-              onClick={() => setOpen(false)}
-              aria-label="Close notifications"
-            >
+            <button className="notif-close-btn" onClick={() => setOpen(false)} aria-label="Close notifications">
               <X size={18} />
             </button>
           </div>
@@ -262,9 +237,7 @@ export default function NotificationPanel() {
                 <Bell size={28} strokeWidth={1.5} />
               </div>
               <p className="notif-empty-title">You're all caught up!</p>
-              <p className="notif-empty-sub">
-                Likes, comments and follows will appear here instantly.
-              </p>
+              <p className="notif-empty-sub">Likes, comments and follows will appear here instantly.</p>
             </div>
           ) : (
             <ul className="notif-list">
@@ -274,7 +247,7 @@ export default function NotificationPanel() {
                 return (
                   <li
                     key={n._id}
-                    className={`notif-item ${!n.read ? "notif-item--unread" : ""}`}
+                    className={`notif-item ${!n.read ? 'notif-item--unread' : ''}`}
                     onClick={() => handleNotificationClick(n)}
                   >
                     <div className={`notif-avatar ${meta.bg}`}>
@@ -282,8 +255,7 @@ export default function NotificationPanel() {
                     </div>
                     <div className="notif-content">
                       <p className="notif-text">
-                        <strong>{n.sender?.name || "Someone"}</strong>{" "}
-                        {meta.label(n)}
+                        <strong>{n.sender?.name || 'Someone'}</strong> {meta.label(n)}
                       </p>
                       <span className="notif-time">{timeAgo(n.createdAt)}</span>
                     </div>
@@ -296,12 +268,7 @@ export default function NotificationPanel() {
         </div>
       </div>
 
-      {open && (
-        <div
-          className="notif-backdrop"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      {open && <div className="notif-backdrop" onClick={() => setOpen(false)} />}
     </div>
   );
 }

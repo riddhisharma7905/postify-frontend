@@ -1,11 +1,16 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2, Pencil, CornerDownRight, User } from "lucide-react";
-import { request } from "../api";
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Heart, MessageCircle, Calendar, Send, Trash2, Pencil, CornerDownRight, User } from 'lucide-react';
+import { request } from '../api';
 
 const getInitials = (name) => {
-  if (!name) return "?";
-  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 };
 
 const PostDetails = () => {
@@ -13,31 +18,36 @@ const PostDetails = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [commentText, setCommentText] = useState("");
+  const [error, setError] = useState('');
+  const [commentText, setCommentText] = useState('');
   const [isLiking, setIsLiking] = useState(false);
   const [recommended, setRecommended] = useState([]);
   const [replyState, setReplyState] = useState({});
   const [userData, setUserData] = useState(null);
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem('authToken');
 
   const parseToken = (t) => {
-    try { return JSON.parse(atob(t.split(".")[1])); } catch { return null; }
+    try {
+      return JSON.parse(atob(t.split('.')[1]));
+    } catch {
+      return null;
+    }
   };
 
   const userId = token ? parseToken(token)?.id : null;
 
-  const fallbackUser = post ? (
-    (post.author?._id === userId) ? post.author :
-    (post.comments?.find(c => c.user?._id === userId)?.user) ||
-    (post.comments?.flatMap(c => c.replies || []).find(r => r.user?._id === userId)?.user) ||
-    null
-  ) : null;
+  const fallbackUser = post
+    ? post.author?._id === userId
+      ? post.author
+      : post.comments?.find((c) => c.user?._id === userId)?.user ||
+        post.comments?.flatMap((c) => c.replies || []).find((r) => r.user?._id === userId)?.user ||
+        null
+    : null;
 
   const currentUser = userData || fallbackUser;
 
   const navigateToUser = (targetUserId) => {
-    if (targetUserId === userId) navigate("/dashboard");
+    if (targetUserId === userId) navigate('/dashboard');
     else navigate(`/author/${targetUserId}`);
   };
 
@@ -47,13 +57,13 @@ const PostDetails = () => {
       const headers = {};
       if (token) {
         const decoded = parseToken(token);
-        if (decoded) headers["x-user-id"] = decoded.id;
-        
-        request("/api/users/dashboard", "GET", null, { Authorization: `Bearer ${token}` })
-          .then(data => setUserData(data))
-          .catch(err => console.error("Failed to fetch user data:", err));
+        if (decoded) headers['x-user-id'] = decoded.id;
+
+        request('/api/user/dashboard', 'GET', null, { Authorization: `Bearer ${token}` })
+          .then((data) => setUserData(data))
+          .catch((err) => console.error('Failed to fetch user data:', err));
       }
-      const data = await request(`/api/posts/${id}`, "GET", null, headers);
+      const data = await request(`/api/posts/${id}`, 'GET', null, headers);
       setPost(data);
     } catch (err) {
       setError(err.message);
@@ -66,7 +76,9 @@ const PostDetails = () => {
     try {
       const data = await request(`/api/posts/${id}/recommendations`);
       setRecommended(data);
-    } catch { setRecommended([]); }
+    } catch {
+      setRecommended([]);
+    }
   }, [id]);
 
   const isViewIncremented = useRef(false);
@@ -74,58 +86,78 @@ const PostDetails = () => {
   useEffect(() => {
     fetchPost();
     fetchRecommendations();
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     if (!isViewIncremented.current && id) {
       isViewIncremented.current = true;
-      request(`/api/posts/${id}/view`, "POST").catch(() => {});
+      request(`/api/posts/${id}/view`, 'POST').catch(() => {});
     }
   }, [fetchPost, fetchRecommendations, id]);
 
   const handleLike = async () => {
-    if (!token) return alert("Please login to like posts!");
+    if (!token) return alert('Please login to like posts!');
     try {
       setIsLiking(true);
-      const updated = await request(`/api/posts/${post?._id || id}/like`, "POST", null, { Authorization: `Bearer ${token}` });
+      const updated = await request(`/api/posts/${post?._id || id}/like`, 'POST', null, {
+        Authorization: `Bearer ${token}`,
+      });
       setPost(updated);
-    } catch { alert("Error liking post"); }
-    finally { setIsLiking(false); }
+    } catch {
+      alert('Error liking post');
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!token) { alert("Please login to comment!"); return; }
+    if (!token) {
+      alert('Please login to comment!');
+      return;
+    }
     if (!commentText.trim()) return;
     try {
-      const updated = await request(`/api/posts/${post?._id || id}/comment`, "POST", { text: commentText }, { Authorization: `Bearer ${token}` });
+      const updated = await request(
+        `/api/posts/${post?._id || id}/comment`,
+        'POST',
+        { text: commentText },
+        { Authorization: `Bearer ${token}` },
+      );
       setPost(updated);
-      setCommentText("");
+      setCommentText('');
     } catch (err) {
-      alert(err.message || "Something went wrong.");
+      alert(err.message || 'Something went wrong.');
     }
   };
 
   const handleDeleteComment = async (commentId) => {
-    if (!window.confirm("Delete this comment?")) return;
+    if (!window.confirm('Delete this comment?')) return;
     try {
-      await request(`/api/posts/${post?._id || id}/comment/${commentId}`, "DELETE", null, { Authorization: `Bearer ${token}` });
+      await request(`/api/posts/${post?._id || id}/comment/${commentId}`, 'DELETE', null, {
+        Authorization: `Bearer ${token}`,
+      });
       setPost((prev) => ({ ...prev, comments: prev.comments.filter((c) => c._id !== commentId) }));
-    } catch { alert("Error deleting comment"); }
+    } catch {
+      alert('Error deleting comment');
+    }
   };
 
   const setReply = (commentId, patch) =>
     setReplyState((prev) => ({ ...prev, [commentId]: { ...prev[commentId], ...patch } }));
 
-  const handleToggleReply = (commentId, tagName = "") => {
+  const handleToggleReply = (commentId, tagName = '') => {
     const isNowOpen = !replyState[commentId]?.isOpen;
     setReply(commentId, {
       isOpen: isNowOpen,
-      replyText: isNowOpen && tagName ? `@${tagName} ` : (replyState[commentId]?.replyText || ""),
+      replyText: isNowOpen && tagName ? `@${tagName} ` : replyState[commentId]?.replyText || '',
     });
   };
 
   const handleAddReply = async (e, commentId) => {
     e.preventDefault();
-    if (!token) { alert("Please login to reply!"); return; }
+    if (!token) {
+      alert('Please login to reply!');
+      return;
+    }
     const text = replyState[commentId]?.replyText?.trim();
     if (!text) return;
 
@@ -133,28 +165,30 @@ const PostDetails = () => {
     try {
       const updated = await request(
         `/api/posts/${post?._id || id}/comment/${commentId}/reply`,
-        "POST",
+        'POST',
         { text },
-        { Authorization: `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` },
       );
       setPost(updated);
-      setReply(commentId, { replyText: "", isOpen: false, isSubmitting: false });
+      setReply(commentId, { replyText: '', isOpen: false, isSubmitting: false });
     } catch (err) {
-      alert(err.message || "Error adding reply");
+      alert(err.message || 'Error adding reply');
       setReply(commentId, { isSubmitting: false });
     }
   };
   const handleDeleteReply = async (commentId, replyId) => {
-    if (!window.confirm("Delete this reply?")) return;
+    if (!window.confirm('Delete this reply?')) return;
     try {
       const updated = await request(
         `/api/posts/${post?._id || id}/comment/${commentId}/reply/${replyId}`,
-        "DELETE",
+        'DELETE',
         null,
-        { Authorization: `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` },
       );
       setPost(updated);
-    } catch { alert("Error deleting reply"); }
+    } catch {
+      alert('Error deleting reply');
+    }
   };
 
   if (loading)
@@ -171,7 +205,9 @@ const PostDetails = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-red-500 text-lg mb-3">Error: {error}</p>
-        <button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Go Back</button>
+        <button onClick={() => navigate(-1)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          Go Back
+        </button>
       </div>
     );
 
@@ -189,12 +225,13 @@ const PostDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50 px-4 sm:px-6 py-10 flex justify-center">
       <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
-        
         <div className="space-y-8 min-w-0">
-          
           <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
-              <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-blue-600 transition">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-gray-600 hover:text-blue-600 transition"
+              >
                 <ArrowLeft size={18} className="mr-2" /> Back
               </button>
               {userId && post.author?._id === userId && (
@@ -209,16 +246,21 @@ const PostDetails = () => {
 
             <h1 className="text-3xl font-bold text-gray-800 mb-3 break-words">{post.title}</h1>
             <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-6">
-              <span className="flex items-center gap-1"><Calendar size={14} />{new Date(post.createdAt).toLocaleDateString()}</span>
+              <span className="flex items-center gap-1">
+                <Calendar size={14} />
+                {new Date(post.createdAt).toLocaleDateString()}
+              </span>
               <button
                 onClick={handleLike}
                 disabled={isLiking}
-                className={`flex items-center gap-1 ${hasLiked ? "text-red-500" : "text-gray-600 hover:text-red-500"} ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`flex items-center gap-1 ${hasLiked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'} ${isLiking ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                <Heart size={16} className={isLiking ? "animate-pulse" : ""} fill={hasLiked ? "red" : "none"} />
+                <Heart size={16} className={isLiking ? 'animate-pulse' : ''} fill={hasLiked ? 'red' : 'none'} />
                 {post.likes?.length || 0} likes
               </button>
-              <span className="flex items-center gap-1"><MessageCircle size={14} /> {totalComments} comments</span>
+              <span className="flex items-center gap-1">
+                <MessageCircle size={14} /> {totalComments} comments
+              </span>
               <span className="flex items-center gap-1">👁 {post.views || 0} views</span>
             </div>
 
@@ -228,13 +270,13 @@ const PostDetails = () => {
               </div>
             )}
 
-            <div className="max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
+            <div className="text-gray-700 leading-relaxed whitespace-pre-line mb-6 break-words">{post.content}</div>
 
             {post.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4">
                 {post.tags.map((tag, i) => (
-                  <button 
-                    key={i} 
+                  <button
+                    key={i}
                     onClick={() => navigate(`/explore?query=${encodeURIComponent(tag)}`)}
                     className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded-full font-medium break-all hover:bg-blue-200 transition-colors cursor-pointer"
                   >
@@ -247,15 +289,15 @@ const PostDetails = () => {
             {post.author && (
               <div className="mt-8 border-t pt-6 flex items-center gap-4">
                 {post.author.profileImage ? (
-                  <img 
-                    src={post.author.profileImage} 
-                    alt={post.author.name} 
+                  <img
+                    src={post.author.profileImage}
+                    alt={post.author.name}
                     className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0 cursor-pointer"
                     onClick={() => navigateToUser(post.author._id)}
                   />
                 ) : (
-                  <div 
-                    className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg border-2 border-white shadow-sm shrink-0 cursor-pointer"
+                  <div
+                    className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg border-2 border-white shadow-sm flex-shrink-0 cursor-pointer"
                     onClick={() => navigateToUser(post.author._id)}
                   >
                     {post.author.name?.charAt(0)?.toUpperCase()}
@@ -263,15 +305,14 @@ const PostDetails = () => {
                 )}
                 <div>
                   <p className="text-gray-900 font-bold">
-                    <button
-                      onClick={() => navigateToUser(post.author._id)}
-                      className="hover:text-blue-600 transition"
-                    >
-                      {post.author.name || "Author"}
+                    <button onClick={() => navigateToUser(post.author._id)} className="hover:text-blue-600 transition">
+                      {post.author.name || 'Author'}
                     </button>
                   </p>
                   {post.category && (
-                    <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{post.category}</span>
+                    <span className="text-xs font-black text-gray-400 uppercase tracking-wide bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
+                      {post.category}
+                    </span>
                   )}
                 </div>
               </div>
@@ -280,19 +321,52 @@ const PostDetails = () => {
 
           {recommended.length > 0 && (
             <div className="bg-white shadow-md rounded-2xl p-6 sm:p-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Recommended Posts ✨</h2>
+              <div className="flex items-center gap-2 mb-5">
+                <span className="w-1 h-5 bg-blue-500 rounded-full inline-block" />
+                <h2 className="text-base font-bold text-gray-800">You might also like</h2>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 {recommended.map((rec) => (
                   <div
                     key={rec._id}
-                    onClick={() => { navigate(`/post/${rec.slug || rec._id}`); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    className="cursor-pointer bg-gray-50 hover:bg-gray-100 p-4 rounded-xl border transition flex flex-col justify-between"
+                    onClick={() => {
+                      navigate(`/post/${rec.slug || rec._id}`);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="cursor-pointer group bg-gray-50 hover:bg-white hover:shadow-md rounded-xl border border-gray-100 transition-all duration-200 overflow-hidden flex flex-col"
                   >
-                    <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{rec.title}</h3>
-                    <div className="flex flex-wrap gap-1 text-xs text-blue-600">
-                      {rec.tags?.slice(0, 3).map((t, i) => (
-                        <span key={i} className="truncate max-w-full">#{t}</span>
-                      ))}
+                    {rec.image && (
+                      <div className="h-32 overflow-hidden flex-shrink-0">
+                        <img
+                          src={rec.image}
+                          alt={rec.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
+                    <div className="p-4 flex flex-col gap-2 flex-1">
+                      {rec.category && (
+                        <span className="text-xs font-bold text-blue-500 uppercase tracking-wide">{rec.category}</span>
+                      )}
+                      <h3 className="font-bold text-gray-800 text-sm leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">{rec.title}</h3>
+                      {rec.tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {rec.tags.slice(0, 3).map((t, i) => (
+                            <span key={i} className="text-xs bg-blue-50 text-blue-500 px-2 py-0.5 rounded-full font-medium">#{t}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-auto pt-2 border-t border-gray-100">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Heart size={11} /> {rec.likes?.length || 0}
+                        </span>
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          👁 {rec.views || 0}
+                        </span>
+                        {rec.author?.name && (
+                          <span className="text-xs text-gray-400 ml-auto truncate">{rec.author.name}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -314,8 +388,10 @@ const PostDetails = () => {
                 ) : (
                   getInitials(currentUser.name)
                 )
+              ) : userId ? (
+                <User size={16} className="opacity-50" />
               ) : (
-                userId ? <User size={16} className="opacity-50" /> : "?"
+                '?'
               )}
             </div>
             <input
@@ -328,7 +404,7 @@ const PostDetails = () => {
             <button
               type="submit"
               disabled={!commentText.trim()}
-              className="bg-blue-600 text-white p-2.5 rounded-xl flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-40 shrink-0"
+              className="bg-blue-600 text-white p-2.5 rounded-xl flex items-center justify-center hover:bg-blue-700 transition disabled:opacity-40 flex-shrink-0"
             >
               <Send size={15} />
             </button>
@@ -340,15 +416,19 @@ const PostDetails = () => {
                 const rs = replyState[comment._id] || {};
                 return (
                   <div key={comment._id} className="group">
-                    <div className={`rounded-xl p-3 text-sm border ${
-                      comment.isToxic ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-100 text-gray-700"
-                    }`}>
+                    <div
+                      className={`rounded-xl p-3 text-sm border ${
+                        comment.isToxic
+                          ? 'bg-red-50 border-red-200 text-red-700'
+                          : 'bg-gray-50 border-gray-100 text-gray-700'
+                      }`}
+                    >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5 flex-1">
                           {comment.user?.profileImage ? (
-                            <img 
-                              src={comment.user.profileImage} 
-                              alt={comment.user.name} 
+                            <img
+                              src={comment.user.profileImage}
+                              alt={comment.user.name}
                               className="w-7 h-7 rounded-full object-cover flex-shrink-0 cursor-pointer"
                               title="View profile"
                               onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
@@ -359,33 +439,37 @@ const PostDetails = () => {
                               className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
                               title="View profile"
                             >
-                              {comment.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                              {comment.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </div>
-                          )}                          <div className="flex-1 min-w-0">
+                          )}{' '}
+                          <div className="flex-1 min-w-0">
                             <button
                               onClick={() => comment.user?._id && navigateToUser(comment.user._id)}
-                              className="font-bold text-gray-900 hover:text-blue-600 transition-colors text-[13px] truncate max-w-full block text-left"
+                              className="font-bold text-gray-900 hover:text-blue-600 transition-colors text-sm truncate max-w-full block text-left"
                             >
-                              {comment.user?.name || "User"}
+                              {comment.user?.name || 'User'}
                             </button>
-                            <p className="mt-0.5 text-[13px] leading-relaxed break-words">{comment.text}</p>
+                            <p className="mt-0.5 text-sm leading-relaxed break-words">{comment.text}</p>
                             {comment.isToxic && (
-                              <p className="text-[11px] text-red-500 mt-1 font-semibold">⚠️ Flagged as toxic</p>
+                              <p className="text-xs text-red-500 mt-1 font-semibold">⚠️ Flagged as toxic</p>
                             )}
 
                             <div className="flex items-center gap-3 mt-1.5 w-full flex-wrap">
-                              <span className="text-[10px] text-gray-400">
-                                {new Date(comment.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                              <span className="text-xs text-gray-400">
+                                {new Date(comment.createdAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
                               </span>
                               {token && (
                                 <button
                                   onClick={() => handleToggleReply(comment._id, comment.user?.name)}
-                                  className="text-[11px] font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
+                                  className="text-xs font-bold text-gray-400 hover:text-blue-600 transition-colors flex items-center gap-1"
                                 >
                                   <CornerDownRight size={10} />
-                                  {rs.isOpen ? "Cancel" : "Reply"}
+                                  {rs.isOpen ? 'Cancel' : 'Reply'}
                                   {comment.replies?.length > 0 && (
-                                    <span className="ml-1 bg-blue-100 text-blue-600 text-[9px] font-black px-1.5 py-0.5 rounded-full">
+                                    <span className="ml-1 bg-blue-100 text-blue-600 text-xs font-black px-1.5 py-0.5 rounded-full">
                                       {comment.replies.length}
                                     </span>
                                   )}
@@ -398,7 +482,7 @@ const PostDetails = () => {
                         {comment.user?._id === userId && (
                           <button
                             onClick={() => handleDeleteComment(comment._id)}
-                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0 mt-1"
+                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0 mt-1"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -412,30 +496,33 @@ const PostDetails = () => {
                           <div
                             key={reply._id}
                             className={`group/reply flex items-start gap-2 p-2.5 rounded-xl border text-sm ${
-                              reply.isToxic ? "bg-red-50 border-red-100 text-red-700" : "bg-blue-50/40 border-transparent text-gray-700"
+                              reply.isToxic
+                                ? 'bg-red-50 border-red-100 text-red-700'
+                                : 'bg-blue-50 border-transparent text-gray-700'
                             }`}
                           >
                             {reply.user?.profileImage ? (
-                              <img 
-                                src={reply.user.profileImage} 
-                                alt={reply.user.name} 
+                              <img
+                                src={reply.user.profileImage}
+                                alt={reply.user.name}
                                 className="w-5 h-5 rounded-full object-cover flex-shrink-0 cursor-pointer"
                                 onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
                               />
                             ) : (
                               <div
                                 onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                                className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[9px] flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
+                                className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs flex-shrink-0 cursor-pointer hover:bg-blue-200 transition-colors"
                               >
-                                {reply.user?.name?.charAt(0)?.toUpperCase() || "U"}
+                                {reply.user?.name?.charAt(0)?.toUpperCase() || 'U'}
                               </div>
-                            )}                            <div className="flex-1 min-w-0">
+                            )}{' '}
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
                                 <button
                                   onClick={() => reply.user?._id && navigateToUser(reply.user._id)}
-                                  className="font-bold text-gray-800 hover:text-blue-600 text-[11px] transition-colors truncate block text-left flex-1"
+                                  className="font-bold text-gray-800 hover:text-blue-600 text-xs transition-colors truncate block text-left flex-1"
                                 >
-                                  {reply.user?.name || "User"}
+                                  {reply.user?.name || 'User'}
                                 </button>
                                 {reply.user?._id === userId && (
                                   <button
@@ -446,15 +533,18 @@ const PostDetails = () => {
                                   </button>
                                 )}
                               </div>
-                              <p className="text-[12px] mt-0.5 break-words">{reply.text}</p>
+                              <p className="text-sm mt-0.5 break-words">{reply.text}</p>
                               <div className="flex items-center gap-2 mt-1 w-full flex-wrap">
-                                <p className="text-[9px] text-gray-400">
-                                  {new Date(reply.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                <p className="text-xs text-gray-400">
+                                  {new Date(reply.createdAt).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric',
+                                  })}
                                 </p>
                                 {token && (
                                   <button
                                     onClick={() => handleToggleReply(comment._id, reply.user?.name)}
-                                    className="text-[9px] font-bold text-blue-500/60 hover:text-blue-600 transition-colors"
+                                    className="text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors"
                                   >
                                     Reply
                                   </button>
@@ -467,10 +557,10 @@ const PostDetails = () => {
                         {comment.replies?.length > 1 && (
                           <button
                             onClick={() => setReply(comment._id, { showAll: !rs.showAll })}
-                            className="text-[10px] font-black text-blue-600/60 hover:text-blue-600 transition-colors ml-7 mt-0.5 flex items-center gap-1"
+                            className="text-xs font-black text-blue-500 hover:text-blue-600 transition-colors ml-7 mt-0.5 flex items-center gap-1"
                           >
                             <span className="w-3 h-[1px] bg-blue-200"></span>
-                            {rs.showAll ? "Hide replies" : `View ${comment.replies.length - 1} more`}
+                            {rs.showAll ? 'Hide replies' : `View ${comment.replies.length - 1} more`}
                           </button>
                         )}
 
@@ -483,14 +573,14 @@ const PostDetails = () => {
                               type="text"
                               autoFocus
                               placeholder={`Reply`}
-                              value={rs.replyText || ""}
+                              value={rs.replyText || ''}
                               onChange={(e) => setReply(comment._id, { replyText: e.target.value })}
                               className="flex-1 border border-blue-100 bg-white rounded-lg px-2.5 py-1.5 text-xs focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none min-w-0"
                             />
                             <button
                               type="submit"
                               disabled={!rs.replyText?.trim() || rs.isSubmitting}
-                              className="bg-blue-600 text-white px-2 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40 text-[10px] font-bold flex items-center transition shrink-0"
+                              className="bg-blue-600 text-white px-2 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40 text-xs font-bold flex items-center transition flex-shrink-0"
                             >
                               <Send size={10} />
                             </button>
@@ -502,7 +592,7 @@ const PostDetails = () => {
                 );
               })
             ) : (
-              <p className="text-gray-500 text-[13px] text-center mt-8">No comments yet. Be the first to comment!</p>
+              <p className="text-gray-500 text-sm text-center mt-8">No comments yet. Be the first to comment!</p>
             )}
           </div>
         </div>

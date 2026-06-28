@@ -1,34 +1,34 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import "./App.css";
-import Home from "./pages/Home";
-import Explore from "./pages/Explore";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import CreatePost from "./pages/CreatePost";
-import EditPost from "./pages/EditPost";
-import PostDetails from "./pages/PostDetails";
-import AuthorProfile from "./pages/AuthorProfile";
-import Legal from "./pages/Legal";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import './App.css';
+import Home from './pages/Home';
+import Explore from './pages/Explore';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import CreatePost from './pages/CreatePost';
+import EditPost from './pages/EditPost';
+import PostDetails from './pages/PostDetails';
+import AuthorProfile from './pages/AuthorProfile';
+import Legal from './pages/Legal';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("authToken"));
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'));
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem('authToken');
     setIsLoggedIn(!!token);
   }, []);
 
   const handleLogin = (token) => {
-    localStorage.setItem("authToken", token);
+    localStorage.setItem('authToken', token);
     setIsLoggedIn(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem('authToken');
     setIsLoggedIn(false);
   };
 
@@ -48,18 +48,9 @@ function App() {
             <Route path="/author/:id" element={<AuthorProfile />} />
             <Route path="/legal" element={<Legal />} />
 
-            <Route 
-              path="/dashboard" 
-              element={isLoggedIn ? <Dashboard /> : <Navigate to="/home" replace />} 
-            />
-            <Route 
-              path="/createpost" 
-              element={isLoggedIn ? <CreatePost /> : <Navigate to="/login" replace />} 
-            />
-            <Route 
-              path="/edit/:id" 
-              element={isLoggedIn ? <EditPost /> : <Navigate to="/login" replace />} 
-            />
+            <Route path="/dashboard" element={isLoggedIn ? <Dashboard /> : <Navigate to="/home" replace />} />
+            <Route path="/createpost" element={isLoggedIn ? <CreatePost /> : <Navigate to="/login" replace />} />
+            <Route path="/edit/:id" element={isLoggedIn ? <EditPost /> : <Navigate to="/login" replace />} />
 
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>

@@ -1,73 +1,59 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Loader2,
-  Calendar,
-  Image,
-  ChevronDown,
-  Send,
-  FileText,
-  X,
-  Hash,
-} from "lucide-react";
-import { request } from "../api";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Calendar, Image, ChevronDown, Send, FileText, X, Hash } from 'lucide-react';
+import { request } from '../api';
 
-const CATEGORIES = [
-  "Technology",
-  "Business",
-  "Education",
-  "Career",
-  "Lifestyle",
-  "Health",
-  "Travel",
-  "Others",
-];
+const CATEGORIES = ['Technology', 'Business', 'Education', 'Career', 'Lifestyle', 'Health', 'Travel', 'Others'];
 
 const generateSlug = (text) =>
   text
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .slice(0, 80);
 
 const getInitials = (name) => {
-  if (!name) return "?";
-  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 };
 
 const CreatePost = () => {
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState('');
 
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
-  const [category, setCategory] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [category, setCategory] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [scheduledAt, setScheduledAt] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem('authToken');
     if (!token) return;
     const fetchUser = async () => {
       try {
-        const data = await request("/api/users/dashboard", "GET", null, {
+        const data = await request('/api/users/dashboard', 'GET', null, {
           Authorization: `Bearer ${token}`,
         });
         setUserData(data);
       } catch (err) {
-        console.error("Failed to fetch user data:", err);
+        console.error('Failed to fetch user data:', err);
       }
     };
     fetchUser();
@@ -83,18 +69,18 @@ const CreatePost = () => {
 
   const handleSlugChange = (e) => {
     setSlugManuallyEdited(true);
-    setSlug(generateSlug(e.target.value) || e.target.value.toLowerCase().replace(/\s/g, "-"));
+    setSlug(generateSlug(e.target.value) || e.target.value.toLowerCase().replace(/\s/g, '-'));
   };
 
   const handleTagKeyDown = (e) => {
-    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
       e.preventDefault();
-      const newTag = tagInput.trim().replace(/,/g, "");
+      const newTag = tagInput.trim().replace(/,/g, '');
       if (newTag && !tags.includes(newTag)) {
         setTags((prev) => [...prev, newTag]);
       }
-      setTagInput("");
-    } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTagInput('');
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
       setTags((prev) => prev.slice(0, -1));
     }
   };
@@ -105,17 +91,17 @@ const CreatePost = () => {
     e.preventDefault();
     if (draft) setIsSavingDraft(true);
     else setIsPublishing(true);
-    setError("");
+    setError('');
 
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem('authToken');
     if (!token) {
-      alert("Please log in before creating a post.");
-      navigate("/login");
+      alert('Please log in before creating a post.');
+      navigate('/login');
       return;
     }
 
     if (isScheduled && !scheduledAt) {
-      setError("Please select a date and time for scheduling.");
+      setError('Please select a date and time for scheduling.');
       setIsPublishing(false);
       setIsSavingDraft(false);
       return;
@@ -123,32 +109,28 @@ const CreatePost = () => {
 
     try {
       await request(
-        "/api/posts",
-        "POST",
+        '/api/posts',
+        'POST',
         {
           title,
           slug: slug || generateSlug(title),
 
           content,
           tags,
-          category: category || "Others",
+          category: category || 'Others',
           image: imageUrl.trim() || null,
           scheduledAt: isScheduled ? scheduledAt : null,
           isDraft: draft,
         },
-        { Authorization: `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` },
       );
 
       alert(
-        draft
-          ? "📝 Draft saved!"
-          : isScheduled
-          ? "✅ Post Scheduled Successfully!"
-          : "✅ Post Published Successfully!"
+        draft ? '📝 Draft saved!' : isScheduled ? '✅ Post Scheduled Successfully!' : '✅ Post Published Successfully!',
       );
-      navigate("/dashboard");
+      navigate('/dashboard');
     } catch (err) {
-      console.error("Publish error:", err);
+      console.error('Publish error:', err);
       setError(err.message);
     } finally {
       setIsPublishing(false);
@@ -160,30 +142,27 @@ const CreatePost = () => {
     const file = e.target.files[0];
     if (!file) return;
     setIsUploading(true);
-    const token = localStorage.getItem("authToken");
+    const token = localStorage.getItem('authToken');
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append('image', file);
     try {
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL || ""}/api/posts/upload`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        }
-      );
-      if (!res.ok) throw new Error("Upload failed");
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL || ''}/api/posts/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setImageUrl(data.url);
     } catch (err) {
-      alert("Failed to upload image. Please try again.");
+      alert('Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
     }
   };
 
   const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
+  const pad = (n) => String(n).padStart(2, '0');
   const toLocalDT = (d) =>
     `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const minDate = toLocalDT(now);
@@ -196,18 +175,13 @@ const CreatePost = () => {
       <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate('/dashboard')}
             className="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium text-sm"
           >
             <ArrowLeft size={16} />
             Back to Dashboard
           </button>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
-              Create Blog
-            </span>
-          </div>
+
           <div className="w-32 flex justify-end">
             {userData && (
               <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200">
@@ -235,9 +209,7 @@ const CreatePost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-7 py-4 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Create Blog
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Create Blog</h2>
               </div>
               <div className="px-7 py-6 space-y-5">
                 <div>
@@ -257,7 +229,7 @@ const CreatePost = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">
                     Slug <span className="text-red-500">*</span>
-                    <span className="text-[11px] font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
                       auto-generated
                     </span>
                   </label>
@@ -296,9 +268,7 @@ const CreatePost = () => {
                   </label>
                   <div
                     className={`relative group overflow-hidden rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-2 min-h-[120px] ${
-                      imageUrl
-                        ? "border-transparent"
-                        : "border-gray-200 hover:border-blue-300 bg-gray-50"
+                      imageUrl ? 'border-transparent' : 'border-gray-200 hover:border-blue-300 bg-gray-50'
                     }`}
                   >
                     {imageUrl ? (
@@ -321,7 +291,7 @@ const CreatePost = () => {
                           </label>
                           <button
                             type="button"
-                            onClick={() => setImageUrl("")}
+                            onClick={() => setImageUrl('')}
                             className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-xs hover:bg-red-700 transition-all"
                           >
                             Remove
@@ -341,16 +311,12 @@ const CreatePost = () => {
                           <Loader2 size={28} className="animate-spin text-blue-500" />
                         ) : (
                           <>
-                            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-105 transition-transform">
                               <Image size={22} />
                             </div>
                             <div className="text-center">
-                              <p className="text-gray-700 font-bold text-sm">
-                                Click to upload cover photo
-                              </p>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                PNG, JPG, or WebP up to 5MB
-                              </p>
+                              <p className="text-gray-700 font-bold text-sm">Click to upload cover photo</p>
+                              <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, or WebP up to 5MB</p>
                             </div>
                           </>
                         )}
@@ -398,13 +364,11 @@ const CreatePost = () => {
             </div>
           </div>
 
-          <div className="w-[280px] shrink-0 space-y-5">
+          <div className="w-[280px] flex-shrink-0 space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Publish
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Publish</h2>
               </div>
               <div className="p-4 space-y-2.5">
                 <button
@@ -415,12 +379,12 @@ const CreatePost = () => {
                   {isPublishing ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      {isScheduled ? "Scheduling..." : "Publishing..."}
+                      {isScheduled ? 'Scheduling...' : 'Publishing...'}
                     </>
                   ) : (
                     <>
                       <Send size={15} />
-                      {isScheduled ? "Schedule Now" : "Create Blog"}
+                      {isScheduled ? 'Schedule Now' : 'Create Blog'}
                     </>
                   )}
                 </button>
@@ -444,7 +408,7 @@ const CreatePost = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate('/dashboard')}
                   className="w-full py-3 bg-gray-100 text-gray-600 font-semibold rounded-xl hover:bg-gray-200 transition-all text-sm"
                 >
                   Cancel
@@ -455,7 +419,7 @@ const CreatePost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">
                   Category <span className="text-red-400">*</span>
                 </h2>
               </div>
@@ -486,9 +450,7 @@ const CreatePost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Tags
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Tags</h2>
               </div>
               <div className="p-4">
                 {tags.length > 0 && (
@@ -498,7 +460,7 @@ const CreatePost = () => {
                         key={tag}
                         className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-100"
                       >
-                        <Hash size={10} className="opacity-60" />
+                        <Hash size={10} className="opacity-75" />
                         {tag}
                         <button
                           type="button"
@@ -520,10 +482,9 @@ const CreatePost = () => {
                   placeholder="Type a tag and press Enter..."
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none text-gray-700 text-sm transition-all placeholder:text-gray-300"
                 />
-                <p className="text-[11px] text-gray-400 mt-1.5">Press Enter or comma to add</p>
+                <p className="text-xs text-gray-400 mt-1.5">Press Enter or comma to add</p>
               </div>
             </div>
-
           </div>
         </form>
       </div>

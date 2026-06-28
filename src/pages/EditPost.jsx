@@ -1,92 +1,81 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  Loader2,
-  Image,
-  ChevronDown,
-  Save,
-  X,
-  Hash,
-} from "lucide-react";
-import { request } from "../api";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Loader2, Image, ChevronDown, Save, X, Hash } from 'lucide-react';
+import { request } from '../api';
 
-const CATEGORIES = [
-  "Technology",
-  "Business",
-  "Education",
-  "Career",
-  "Lifestyle",
-  "Health",
-  "Travel",
-  "Others",
-];
+const CATEGORIES = ['Technology', 'Business', 'Education', 'Career', 'Lifestyle', 'Health', 'Travel', 'Others'];
 
 const generateSlug = (text) =>
   text
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .slice(0, 80);
 
 const getInitials = (name) => {
-  if (!name) return "?";
-  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 };
 
 const EditPost = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [summary, setSummary] = useState("");
-  const [content, setContent] = useState("");
-  const [tagInput, setTagInput] = useState("");
+
+  const [content, setContent] = useState('');
+  const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState([]);
-  const [category, setCategory] = useState("Others");
-  const [imageUrl, setImageUrl] = useState("");
+  const [category, setCategory] = useState('Others');
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [userData, setUserData] = useState(null);
 
   const tagInputRef = useRef(null);
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem('authToken');
 
   useEffect(() => {
     if (!token) {
-      navigate("/login");
+      navigate('/login');
       return;
     }
     const fetchPost = async () => {
       try {
         const post = await request(`/api/posts/${id}`);
-        setTitle(post.title || "");
-        setSlug(post.slug || generateSlug(post.title || ""));
-        setSummary(post.summary || "");
-        setContent(post.content || "");
+        setTitle(post.title || '');
+        setSlug(post.slug || generateSlug(post.title || ''));
+
+        setContent(post.content || '');
         setTags(post.tags || []);
-        setCategory(post.category || "Others");
-        setImageUrl(post.image || "");
+        setCategory(post.category || 'Others');
+        setImageUrl(post.image || '');
+        setLoading(false);
       } catch (err) {
-        console.error("Fetch error:", err);
-        setError("Failed to load post.");
+        console.error('Fetch error:', err);
+        setError('Failed to load post.');
         setLoading(false);
       }
     };
 
     const fetchUser = async () => {
       try {
-        const data = await request("/api/users/dashboard", "GET", null, {
+        const data = await request('/api/user/dashboard', 'GET', null, {
           Authorization: `Bearer ${token}`,
         });
         setUserData(data);
       } catch (err) {
-        console.error("Failed to fetch user data:", err);
+        console.error('Failed to fetch user data:', err);
       }
     };
 
@@ -102,18 +91,23 @@ const EditPost = () => {
 
   const handleSlugChange = (e) => {
     setSlugManuallyEdited(true);
-    setSlug(e.target.value.toLowerCase().replace(/\s/g, "-").replace(/[^a-z0-9-]/g, ""));
+    setSlug(
+      e.target.value
+        .toLowerCase()
+        .replace(/\s/g, '-')
+        .replace(/[^a-z0-9-]/g, ''),
+    );
   };
 
   const handleTagKeyDown = (e) => {
-    if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+    if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
       e.preventDefault();
-      const newTag = tagInput.trim().replace(/,/g, "");
+      const newTag = tagInput.trim().replace(/,/g, '');
       if (newTag && !tags.includes(newTag)) {
         setTags((prev) => [...prev, newTag]);
       }
-      setTagInput("");
-    } else if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTagInput('');
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
       setTags((prev) => prev.slice(0, -1));
     }
   };
@@ -123,26 +117,26 @@ const EditPost = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
-    setError("");
+    setError('');
     try {
       await request(
         `/api/posts/${id}`,
-        "PUT",
+        'PUT',
         {
           title,
           slug,
-          summary,
+
           content,
           tags,
           category,
           image: imageUrl.trim() || null,
         },
-        { Authorization: `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` },
       );
-      alert("✅ Post updated successfully!");
+      alert('✅ Post updated successfully!');
       navigate(`/post/${id}`);
     } catch (err) {
-      console.error("Update error:", err);
+      console.error('Update error:', err);
       setError(err.message);
       setIsSaving(false);
     }
@@ -153,21 +147,18 @@ const EditPost = () => {
     if (!file) return;
     setIsUploading(true);
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append('image', file);
     try {
-      const res = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL || ""}/api/posts/upload`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData,
-        }
-      );
-      if (!res.ok) throw new Error("Upload failed");
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL || ''}/api/posts/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
       setImageUrl(data.url);
     } catch (err) {
-      alert("Failed to upload image. Please try again.");
+      alert('Failed to upload image. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -192,12 +183,7 @@ const EditPost = () => {
             <ArrowLeft size={16} />
             Back
           </button>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-blue-500" />
-            <span className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider">
-              Edit Post
-            </span>
-          </div>
+
           <div className="w-16 flex justify-end">
             {userData && (
               <div className="h-9 w-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden border border-blue-200">
@@ -225,9 +211,7 @@ const EditPost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-7 py-4 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Article Content
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Blog Content</h2>
               </div>
               <div className="px-7 py-6 space-y-5">
                 <div>
@@ -247,7 +231,7 @@ const EditPost = () => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">
                     Slug <span className="text-red-500">*</span>
-                    <span className="text-[11px] font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-normal text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
                       editable
                     </span>
                   </label>
@@ -265,18 +249,6 @@ const EditPost = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                    Summary
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    placeholder="Brief summary (shown in article previews)"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none text-gray-700 transition-all resize-none placeholder:text-gray-300 text-sm"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -296,13 +268,11 @@ const EditPost = () => {
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">
                     <Image size={14} className="text-gray-400" />
                     Cover Image
-                    <span className="text-[11px] font-normal text-gray-400">(optional)</span>
+                    <span className="text-xs font-normal text-gray-400">(optional)</span>
                   </label>
                   <div
                     className={`relative group overflow-hidden rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center min-h-[120px] ${
-                      imageUrl
-                        ? "border-transparent"
-                        : "border-blue-200 hover:border-blue-400 bg-blue-50/20"
+                      imageUrl ? 'border-transparent' : 'border-blue-200 hover:border-blue-400 bg-blue-50'
                     }`}
                   >
                     {imageUrl ? (
@@ -325,7 +295,7 @@ const EditPost = () => {
                           </label>
                           <button
                             type="button"
-                            onClick={() => setImageUrl("")}
+                            onClick={() => setImageUrl('')}
                             className="px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-xs hover:bg-red-700 transition-all"
                           >
                             Remove
@@ -345,16 +315,12 @@ const EditPost = () => {
                           <Loader2 size={28} className="animate-spin text-blue-500" />
                         ) : (
                           <>
-                            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                            <div className="h-12 w-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-500 group-hover:scale-105 transition-transform">
                               <Image size={22} />
                             </div>
                             <div className="text-center">
-                              <p className="text-gray-700 font-bold text-sm">
-                                Click to upload cover photo
-                              </p>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                PNG, JPG, or WebP up to 5MB
-                              </p>
+                              <p className="text-gray-700 font-bold text-sm">Click to upload cover photo</p>
+                              <p className="text-xs text-gray-400 mt-0.5">PNG, JPG, or WebP up to 5MB</p>
                             </div>
                           </>
                         )}
@@ -366,13 +332,11 @@ const EditPost = () => {
             </div>
           </div>
 
-          <div className="w-[280px] shrink-0 space-y-5">
+          <div className="w-[280px] flex-shrink-0 space-y-5">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Update Post
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Update Post</h2>
               </div>
               <div className="p-4 space-y-2.5">
                 <button
@@ -405,9 +369,7 @@ const EditPost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Category
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Category</h2>
               </div>
               <div className="p-4">
                 <div className="relative">
@@ -433,9 +395,7 @@ const EditPost = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="border-b border-gray-50 px-5 py-3.5 flex items-center gap-2">
                 <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
-                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-widest">
-                  Tags
-                </h2>
+                <h2 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Tags</h2>
               </div>
               <div className="p-4">
                 {tags.length > 0 && (
@@ -445,7 +405,7 @@ const EditPost = () => {
                         key={tag}
                         className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-100"
                       >
-                        <Hash size={10} className="opacity-60" />
+                        <Hash size={10} className="opacity-75" />
                         {tag}
                         <button
                           type="button"
@@ -467,7 +427,7 @@ const EditPost = () => {
                   placeholder="Type a tag and press Enter..."
                   className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none text-gray-700 text-sm transition-all placeholder:text-gray-300"
                 />
-                <p className="text-[11px] text-gray-400 mt-1.5">Press Enter or comma to add</p>
+                <p className="text-xs text-gray-400 mt-1.5">Press Enter or comma to add</p>
               </div>
             </div>
           </div>
