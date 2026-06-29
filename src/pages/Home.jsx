@@ -1,149 +1,237 @@
-import { PenTool, Users, Zap, Shield, ArrowRight, Star } from 'lucide-react';
-import heroImage from '../assets/hero-image.jpg';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  ArrowRight, PenLine, Sparkles, Shield,
+  Zap, ChevronRight, Hash, TrendingUp, MessageCircle, BookOpen,
+} from 'lucide-react';
+import { request } from '../api';
+import '../styles/home.css';
+
+const FEATURES = [
+  {
+    icon: Shield,
+    title: 'AI Toxic Comment Filter',
+    desc: 'Our built-in ML model automatically blocks hateful or abusive comments — keeping the community respectful without any manual work.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Smart Recommendations',
+    desc: 'Every post page shows you similar reads based on matching tags and category — so readers always find their next favourite story.',
+  },
+  {
+    icon: Zap,
+    title: 'Schedule & Draft Posts',
+    desc: "Write now, publish later. Schedule posts up to 3 days in advance or save drafts and come back when you're ready.",
+  },
+  {
+    icon: TrendingUp,
+    title: 'Author Analytics',
+    desc: 'Track views, likes, and comments on every post from your dashboard. Know what your audience loves and write more of it.',
+  },
+  {
+    icon: MessageCircle,
+    title: 'Threaded Comments & Replies',
+    desc: 'Real conversations happen here. Comments support nested replies, so discussions stay organised and easy to follow.',
+  },
+  {
+    icon: BookOpen,
+    title: 'Tag-Based Search',
+    desc: 'Search by title, content, or hashtags. Find any post on the platform in seconds — no account required.',
+  },
+];
+
+function PostCard({ post }) {
+  const navigate = useNavigate();
+  return (
+    <div className="hp-post-card" onClick={() => navigate(`/post/${post.slug || post._id}`)}>
+      <div className="hp-post-img">
+        {post.image
+          ? <img src={post.image} alt={post.title} />
+          : <div className="hp-post-img-placeholder"><PenLine size={28} /></div>}
+      </div>
+      <div className="hp-post-body">
+        {post.category && <span className="hp-post-category">{post.category}</span>}
+        <h3 className="hp-post-title">{post.title}</h3>
+        <div className="hp-post-meta">
+          <div className="hp-post-author">
+            {post.author?.profileImage
+              ? <img src={post.author.profileImage} alt={post.author.name} className="hp-post-avatar" />
+              : <div className="hp-post-avatar hp-post-avatar-initials">{post.author?.name?.charAt(0)?.toUpperCase() || 'U'}</div>}
+            <span>{post.author?.name || 'Author'}</span>
+          </div>
+          <div className="hp-post-stats">
+            <span>👁 {post.views || 0}</span>
+            <span>❤️ {post.likes?.length || 0}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const Home = () => {
-  const features = [
-    {
-      icon: PenTool,
-      title: 'Beautiful Writing Experience',
-      description: 'Craft your thoughts with our elegant, distraction-free editor designed for writers.',
-    },
-    {
-      icon: Users,
-      title: 'Growing Community',
-      description: 'Connect with fellow writers and readers in a supportive, engaging environment.',
-    },
-    {
-      icon: Zap,
-      title: 'Lightning Fast',
-      description: 'Optimized for speed with instant publishing and seamless reading experience.',
-    },
-    {
-      icon: Shield,
-      title: 'Secure & Private',
-      description: 'Your content is protected with enterprise-grade security and privacy controls.',
-    },
-  ];
+  const navigate      = useNavigate();
+  const [posts, setPosts]         = useState([]);
+  useEffect(() => {
+    request('/api/posts?limit=6')
+      .then((d) => setPosts((Array.isArray(d) ? d : d.posts || []).slice(0, 6)))
+      .catch(() => {});
+  }, []);
 
-  const testimonials = [
-    {
-      name: 'Sarah Chen',
-      role: 'Tech Writer',
-      content: 'Postify has transformed how I share my ideas. The community here is incredible.',
-      rating: 5,
-    },
-    {
-      name: 'Marcus Rodriguez',
-      role: 'Content Creator',
-      content: 'Finally, a platform that puts writers first. Clean, fast, and beautifully designed.',
-      rating: 5,
-    },
-    {
-      name: 'Emma Thompson',
-      role: 'Journalist',
-      content: "The writing experience is unmatched. I've never been more productive.",
-      rating: 5,
-    },
-  ];
+
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 text-gray-900">
-      <section className="py-20">
-        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-6">
-            <h2 className="text-4xl md:text-6xl font-bold leading-tight">
-              Where Stories <span className="text-blue-600">Come to Life</span>
-            </h2>
-            <p className="text-lg text-gray-600">
-              Join thousands of writers sharing their passion, expertise, and creativity on Postify, the most elegant
-              blogging platform.
-            </p>
+    <div className="hp-root">
+      <section className="hp-hero">
+        <div className="hp-hero-blob hp-hero-blob1" />
+        <div className="hp-hero-blob hp-hero-blob2" />
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href="/signup"
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition"
-              >
-                Start Writing Today
-                <ArrowRight className="h-5 w-5" />
-              </a>
+        <div className="hp-hero-left">
+          <div className="hp-badge">
+            <Sparkles size={12} />
+            <span>The modern blogging platform</span>
+          </div>
+
+          <h1 className="hp-hero-title">
+            Your Ideas Deserve<br />
+            a <span className="hp-gradient-text">Better Stage</span>
+          </h1>
+
+          <p className="hp-hero-sub">
+            Postify is where curious minds publish, discover, and connect.
+            Share your expertise, grow your audience, and read stories that actually matter.
+          </p>
+
+          <div className="hp-hero-btns">
+            <button className="hp-btn-primary" onClick={() => navigate('/register')}>
+              Start Writing Free <ArrowRight size={15} />
+            </button>
+            <button className="hp-btn-outline" onClick={() => navigate('/explore')}>
+              Explore Posts <ChevronRight size={15} />
+            </button>
+          </div>
+
+          <div className="hp-social-proof">
+            <div className="hp-avatar-stack">
+              {['S','M','E','R','A'].map((l, i) => (
+                <div key={i} className="hp-avatar-bubble" style={{ marginLeft: i === 0 ? 0 : -10 }}>{l}</div>
+              ))}
             </div>
+            <span>Join <strong>5,000+</strong> writers on Postify</span>
+          </div>
+        </div>
 
-            <div className="flex items-center gap-8 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current text-yellow-500" />
-                ))}
-                <span>5.0 from writers</span>
+        <div className="hp-hero-right">
+          <div className="hp-mockup">
+            <div className="hp-mockup-topbar">
+              <span className="hp-dot hp-dot-red" />
+              <span className="hp-dot hp-dot-yellow" />
+              <span className="hp-dot hp-dot-green" />
+            </div>
+            <div className="hp-mockup-line hp-line-title" />
+            <div className="hp-mockup-line hp-line-sub" />
+            <div className="hp-mockup-line hp-line-body" />
+            <div className="hp-mockup-line hp-line-body2" />
+            <div className="hp-mockup-tags">
+              {['#tech','#ai','#writing'].map((t) => (
+                <span key={t} className="hp-mockup-tag">{t}</span>
+              ))}
+            </div>
+            <div className="hp-mockup-footer">
+              <div className="hp-mockup-author">
+                <div className="hp-mockup-avatar" />
+                <span>Sarah Chen</span>
               </div>
-              <div>
-                <span className="font-semibold text-gray-900">10k+</span> stories published
+              <div className="hp-mockup-counts">
+                <span>248</span>
+                <span>1.2k</span>
               </div>
             </div>
           </div>
-          <div className="relative group">
-            <img
-              src={heroImage}
-              alt="Writing workspace"
-              className="rounded-2xl shadow-lg transition transform group-hover:scale-105 group-hover:rotate-1"
-            />
+
+          <div className="hp-float hp-float-trending">
+            <TrendingUp size={15} color="#2563eb" />
+            <div>
+              <div className="hp-float-label">Trending Now</div>
+              <div className="hp-float-val">+43% readers</div>
+            </div>
+          </div>
+
+          <div className="hp-float hp-float-live">
+            <Zap size={14} color="#7c3aed" />
+            <div>
+              <div className="hp-float-label">Just Published</div>
+              <div className="hp-float-val">2 min ago</div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-20">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Built for <span className="text-blue-600">Modern Writers</span>
-            </h2>
-            <p className="text-lg text-gray-600 mt-2">
-              Everything you need to create, share, and grow your audience in one beautiful platform.
-            </p>
+      <section className="hp-features-section">
+        <div className="hp-inner">
+          <div className="hp-section-hd">
+            <p className="hp-section-label"><Sparkles size={11} /> Why Postify</p>
+            <h2 className="hp-section-title">Built Different, <span className="hp-blue">On Purpose</span></h2>
+            <p className="hp-section-sub">Not just another blogging site. Here's what we actually built that others didn't bother with.</p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, idx) => (
-              <div
-                key={idx}
-                className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition transform hover:-translate-y-1"
-              >
-                <div className="h-12 w-12 flex items-center justify-center rounded-lg bg-blue-50 mb-4">
-                  <feature.icon className="h-6 w-6 text-blue-600" />
+          <div className="hp-features-grid">
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div key={i} className="hp-feature-card">
+                  <div className="hp-feature-icon"><Icon size={20} /></div>
+                  <h3 className="hp-feature-title">{f.title}</h3>
+                  <p className="hp-feature-desc">{f.desc}</p>
                 </div>
-                <h3 className="font-semibold text-lg">{feature.title}</h3>
-                <p className="text-gray-600 text-sm mt-2">{feature.description}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Loved by <span className="text-blue-600">Writers Everywhere</span>
-            </h2>
-            <p className="text-lg text-gray-600 mt-2">See what our community has to say about their experience.</p>
+      {posts.length > 0 && (
+        <section className="hp-posts-section">
+          <div className="hp-inner">
+            <div className="hp-section-hd">
+              <p className="hp-section-label"><PenLine size={11} /> Latest Stories</p>
+              <h2 className="hp-section-title">Fresh from the <span className="hp-blue">Community</span></h2>
+              <p className="hp-section-sub">Hand-picked articles published recently by writers in our community.</p>
+            </div>
+            <div className="hp-posts-grid">
+              {posts.map((p) => <PostCard key={p._id} post={p} />)}
+            </div>
+            <div className="hp-posts-more">
+              <button className="hp-btn-outline" onClick={() => navigate('/explore')}>
+                View All Posts <ArrowRight size={15} />
+              </button>
+            </div>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((t, idx) => (
-              <div key={idx} className="p-6 bg-white rounded-xl shadow hover:shadow-lg transition">
-                <div className="flex gap-1 mb-3">
-                  {[...Array(t.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current text-yellow-500" />
-                  ))}
-                </div>
-                <p className="italic text-gray-600">"{t.content}"</p>
-                <div className="mt-4">
-                  <p className="font-semibold">{t.name}</p>
-                  <p className="text-sm text-gray-500">{t.role}</p>
-                </div>
-              </div>
-            ))}
+        </section>
+      )}
+
+      <section className="hp-cta-section">
+        <div className="hp-cta-blob1" />
+        <div className="hp-cta-blob2" />
+        <div className="hp-cta-inner">
+          <div className="hp-badge hp-badge-light">
+            <Sparkles size={12} /> Free to start
+          </div>
+          <h2 className="hp-cta-title">Ready to Share Your Story?</h2>
+          <p className="hp-cta-sub">
+            Join thousands of writers who choose Postify to express their ideas.
+            No credit card. No complex setup. Just great writing.
+          </p>
+          <div className="hp-cta-btns">
+            <button className="hp-btn-primary hp-btn-primary-light" onClick={() => navigate('/register')}>
+              Create Free Account <ArrowRight size={15} />
+            </button>
+            <button className="hp-btn-ghost-light" onClick={() => navigate('/explore')}>
+              Read Stories <ChevronRight size={15} />
+            </button>
           </div>
         </div>
       </section>
+
     </div>
   );
 };
